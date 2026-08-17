@@ -48,7 +48,7 @@ const VideoBackground = ({ children }) => {
             objectFit: "cover",
           }}
         >
-          <source src="/src/assets/Background.mp4" type="video/mp4" />
+          <source src="/videos/Background.mp4" type="video/mp4" />
         </video>
         <Box
           sx={{
