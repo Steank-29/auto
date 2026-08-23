@@ -20,7 +20,7 @@ import { Email, Lock, Visibility, VisibilityOff, ArrowForward } from '@mui/icons
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosConfig';
 import PA from '../assets/PA.png';
-import BDG from '../assets/BDG.png';
+import BDG from '../assets/BDGC.png';
 
 const Signin = () => {
   const navigate = useNavigate();
