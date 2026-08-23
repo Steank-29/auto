@@ -35,10 +35,12 @@ import {
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import PA from "../assets/PA.png";
 
 const Navbar = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
@@ -47,9 +49,9 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [displayText, setDisplayText] = useState("");
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(true);
 
-  const fullText = "Pristige Auto";
+  const fullText = "Prestige Auto";
 
   useEffect(() => {
     let index = 0;
@@ -72,7 +74,6 @@ const Navbar = () => {
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
-    setProductsOpen(false);
   };
 
   const handleCartOpen = () => {
@@ -103,9 +104,35 @@ const Navbar = () => {
     setProductsOpen(!productsOpen);
   };
 
+  const handleNavigateToLogin = () => {
+    navigate("/signin");
+  };
+
+  const handleMobileLogin = () => {
+    handleDrawerClose();
+    navigate("/signin");
+  };
+
+  // Render text with "Auto" in green
+  const renderText = () => {
+    if (!displayText) return null;
+    
+    const autoIndex = displayText.indexOf("Auto");
+    if (autoIndex === -1) {
+      return <span>{displayText}</span>;
+    }
+    
+    return (
+      <>
+        <span>{displayText.substring(0, autoIndex)}</span>
+        <span style={{ color: "#2e7d32" }}>Auto</span>
+        <span>{displayText.substring(autoIndex + 4)}</span>
+      </>
+    );
+  };
+
   const navItems = [
     { text: "Home", hasSub: false },
-    { text: "Chi Siamo", hasSub: false },
     { text: "Prodotti", hasSub: true, subItems: ["Side Door", "Front Logo", "Trank Logo"] },
     { text: "Contatti", hasSub: false },
   ];
@@ -131,8 +158,8 @@ const Navbar = () => {
           width: "100%",
           left: 0,
           top: 0,
-          pt: { xs: 2, sm: 3, md: 4 },
-          pb: { xs: 1, sm: 1.5, md: 2 },
+          pt: { xs: 0, sm: 3, md: 4 },
+          pb: { xs: 0, sm: 1.5, md: 2 },
           background: "transparent",
           backdropFilter: "none",
           zIndex: 9999,
@@ -143,20 +170,26 @@ const Navbar = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            py: { xs: 0.5, sm: 1 },
+            py: { xs: 0.8, sm: 1 },
             px: { xs: 2, sm: 3, md: 4 },
-            width: { xs: "92%", sm: "95%", md: "90%" },
+            width: { xs: "100%", sm: "95%", md: "90%" },
             maxWidth: "1400px",
             margin: "0 auto",
-            borderRadius: "50px",
+            borderRadius: { xs: "0px", sm: "50px", md: "50px" },
             backgroundColor: "rgb(255, 255, 255)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            boxShadow: { 
+              xs: "0 2px 16px rgba(0,0,0,0.08)", 
+              sm: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)" 
+            },
             border: "1px solid rgba(255,255,255,0.3)",
-            animation: "float 3s ease-in-out infinite",
+            animation: { xs: "none", sm: "float 3s ease-in-out infinite", md: "float 3s ease-in-out infinite" },
             transition: "all 0.3s ease",
             "&:hover": {
-              boxShadow: "0 12px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)",
-              transform: "translateY(-2px)",
+              boxShadow: { 
+                xs: "0 2px 16px rgba(0,0,0,0.12)", 
+                sm: "0 12px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)" 
+              },
+              transform: { xs: "none", sm: "translateY(-2px)", md: "translateY(-2px)" },
             },
           }}
         >
@@ -164,7 +197,7 @@ const Navbar = () => {
           {(isMobile || isTablet) ? (
             <>
               <IconButton
-                onClick={handleMenuOpen}
+                onClick={drawerOpen ? handleDrawerClose : handleMenuOpen}
                 sx={{
                   color: "#141010",
                   "&:hover": {
@@ -173,10 +206,10 @@ const Navbar = () => {
                   },
                 }}
               >
-                <MenuIcon />
+                {drawerOpen ? <Close /> : <MenuIcon />}
               </IconButton>
 
-              <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", flex: 1, justifyContent: "center" }}>
                 <img
                   src={PA}
                   alt="Logo"
@@ -193,13 +226,12 @@ const Navbar = () => {
                     fontWeight: 700,
                     ml: 1,
                     letterSpacing: "1px",
-                    fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
-                    display: { xs: "none", sm: "block" },
-                    minWidth: "100px",
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                    whiteSpace: "nowrap",
                     fontSize: { xs: "0.9rem", sm: "1.1rem" },
                   }}
                 >
-                  {displayText}
+                  {renderText()}
                   {!isTypingComplete && (
                     <span
                       style={{
@@ -257,8 +289,13 @@ const Navbar = () => {
                     badgeContent={cartItems.length} 
                     sx={{
                       "& .MuiBadge-badge": {
-                        backgroundColor: "#141414",
+                        backgroundColor: "#2e7d32",
                         color: "#ffffff",
+                        fontWeight: 700,
+                        fontSize: "0.7rem",
+                        height: "20px",
+                        minWidth: "20px",
+                        borderRadius: "50%",
                       },
                     }}
                   >
@@ -286,13 +323,13 @@ const Navbar = () => {
                     fontWeight: 700,
                     ml: 1.5,
                     letterSpacing: "1px",
-                    fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                     display: { xs: "none", sm: "block" },
                     minWidth: "130px",
                     fontSize: "1.1rem",
                   }}
                 >
-                  {displayText}
+                  {renderText()}
                   {!isTypingComplete && (
                     <span
                       style={{
@@ -317,7 +354,7 @@ const Navbar = () => {
                       fontWeight: 500,
                       px: 2.5,
                       py: 0.8,
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       textTransform: "none",
                       fontSize: "0.9rem",
                       position: "relative",
@@ -367,7 +404,7 @@ const Navbar = () => {
                       },
                       "& input": {
                         padding: "7px 14px",
-                        fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                         fontSize: "0.8rem",
                       },
                     },
@@ -411,8 +448,13 @@ const Navbar = () => {
                     badgeContent={cartItems.length} 
                     sx={{
                       "& .MuiBadge-badge": {
-                        backgroundColor: "#141414",
+                        backgroundColor: "#2e7d32",
                         color: "#ffffff",
+                        fontWeight: 700,
+                        fontSize: "0.7rem",
+                        height: "20px",
+                        minWidth: "20px",
+                        borderRadius: "50%",
                       },
                     }}
                   >
@@ -421,7 +463,7 @@ const Navbar = () => {
                 </IconButton>
 
                 <IconButton
-                  onClick={() => console.log("Naviga alla pagina profilo")}
+                  onClick={handleNavigateToLogin}
                   sx={{
                     color: "#141010",
                     "&:hover": {
@@ -446,7 +488,7 @@ const Navbar = () => {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              width: { xs: "92%", sm: "95%" },
+              width: { xs: "100%", sm: "95%" },
               margin: "0 auto",
             }}
           >
@@ -468,7 +510,7 @@ const Navbar = () => {
                   },
                   "& input": {
                     padding: "10px 14px",
-                    fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                     fontSize: "0.9rem",
                   },
                 },
@@ -504,10 +546,10 @@ const Navbar = () => {
           <MenuItem
             onClick={() => {
               handleProfileClose();
-              console.log("Vai al profilo");
+              handleNavigateToLogin();
             }}
             sx={{
-              fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
               "&:hover": {
                 backgroundColor: "rgba(0, 0, 0, 0.06)",
                 color: "#000000",
@@ -525,7 +567,7 @@ const Navbar = () => {
               console.log("Vai agli ordini");
             }}
             sx={{
-              fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
               "&:hover": {
                 backgroundColor: "rgba(0, 0, 0, 0.06)",
                 color: "#000000",
@@ -544,7 +586,7 @@ const Navbar = () => {
               console.log("Logout");
             }}
             sx={{
-              fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
               color: "#000000",
               "&:hover": {
                 backgroundColor: "rgba(0, 0, 0, 0.06)",
@@ -564,11 +606,15 @@ const Navbar = () => {
         open={drawerOpen}
         onClose={handleDrawerClose}
         sx={{
+          zIndex: 9998,
           "& .MuiDrawer-paper": {
             width: "280px",
             bgcolor: "#ffffff",
             boxShadow: "4px 0 20px rgba(0,0,0,0.1)",
             borderRadius: "0 20px 20px 0",
+            marginTop: { xs: "56px", sm: "64px" },
+            height: { xs: "calc(100% - 56px)", sm: "calc(100% - 64px)" },
+            overflow: "hidden",
           },
         }}
       >
@@ -578,6 +624,7 @@ const Navbar = () => {
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            overflow: "auto",
           }}
         >
           {/* Logo Centered at Top */}
@@ -586,7 +633,7 @@ const Navbar = () => {
               src={PA}
               alt="Logo"
               style={{
-                height: "60px",
+                height: "50px",
                 width: "auto",
                 objectFit: "contain",
               }}
@@ -614,7 +661,7 @@ const Navbar = () => {
                     primary={item.text}
                     sx={{
                       "& .MuiListItemText-primary": {
-                        fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                         fontWeight: 500,
                         color: "#141010",
                         fontSize: "1rem",
@@ -647,7 +694,7 @@ const Navbar = () => {
                             primary={subItem}
                             sx={{
                               "& .MuiListItemText-primary": {
-                                fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                                 fontWeight: 400,
                                 color: "#555555",
                                 fontSize: "0.9rem",
@@ -670,20 +717,17 @@ const Navbar = () => {
               fullWidth
               variant="contained"
               startIcon={<Person />}
-              onClick={() => {
-                handleDrawerClose();
-                console.log("Naviga al login");
-              }}
+              onClick={handleMobileLogin}
               sx={{
-                backgroundColor: "#000000",
+                backgroundColor: "#2e7d32",
                 borderRadius: "25px",
                 py: 1.5,
                 textTransform: "none",
-                fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                 fontWeight: 600,
                 fontSize: "1rem",
                 "&:hover": {
-                  backgroundColor: "#333333",
+                  backgroundColor: "#2e7d32",
                   transform: "translateY(-2px)",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                 },
@@ -705,7 +749,7 @@ const Navbar = () => {
           >
             <Typography
               sx={{
-                fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                 color: "#999999",
                 fontSize: "0.7rem",
               }}
@@ -742,7 +786,7 @@ const Navbar = () => {
           >
             <Typography
               sx={{
-                fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                 fontWeight: 700,
                 fontSize: "1.2rem",
                 color: "#000000",
@@ -800,7 +844,7 @@ const Navbar = () => {
                       <Box sx={{ flex: 1 }}>
                         <Typography
                           sx={{
-                            fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                             fontWeight: 600,
                             fontSize: "0.95rem",
                             color: "#000000",
@@ -810,7 +854,7 @@ const Navbar = () => {
                         </Typography>
                         <Typography
                           sx={{
-                            fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                             color: "#000000",
                             fontSize: "1.1rem",
                             fontWeight: 700,
@@ -833,7 +877,7 @@ const Navbar = () => {
                           </IconButton>
                           <Typography
                             sx={{
-                              fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                               fontWeight: 500,
                               minWidth: "24px",
                               textAlign: "center",
@@ -884,7 +928,7 @@ const Navbar = () => {
                 >
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 600,
                       fontSize: "1rem",
                       color: "#666666",
@@ -894,7 +938,7 @@ const Navbar = () => {
                   </Typography>
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 700,
                       fontSize: "1.1rem",
                       color: "#000000",
@@ -912,7 +956,7 @@ const Navbar = () => {
                 >
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 600,
                       fontSize: "1rem",
                       color: "#666666",
@@ -922,7 +966,7 @@ const Navbar = () => {
                   </Typography>
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 600,
                       fontSize: "1rem",
                       color: "#4CAF50",
@@ -941,7 +985,7 @@ const Navbar = () => {
                 >
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 700,
                       fontSize: "1.2rem",
                       color: "#000000",
@@ -951,7 +995,7 @@ const Navbar = () => {
                   </Typography>
                   <Typography
                     sx={{
-                      fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                       fontWeight: 700,
                       fontSize: "1.3rem",
                       color: "#000000",
@@ -972,7 +1016,7 @@ const Navbar = () => {
                     borderRadius: "25px",
                     py: 1.8,
                     textTransform: "none",
-                    fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                     fontWeight: 600,
                     fontSize: "1.05rem",
                     "&:hover": {
@@ -1001,7 +1045,7 @@ const Navbar = () => {
               <ShoppingCartOutlined sx={{ fontSize: 80, color: "#e0e0e0", mb: 2 }} />
               <Typography
                 sx={{
-                  fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                   fontWeight: 600,
                   fontSize: "1.2rem",
                   color: "#000000",
@@ -1012,7 +1056,7 @@ const Navbar = () => {
               </Typography>
               <Typography
                 sx={{
-                  fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                   color: "#666666",
                   textAlign: "center",
                 }}
@@ -1029,7 +1073,7 @@ const Navbar = () => {
                   borderRadius: "25px",
                   px: 4,
                   py: 1.5,
-                  fontFamily: "'Comic Sans MS', 'Comic Neue', cursive",
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                   textTransform: "none",
                   "&:hover": {
                     borderColor: "#333333",
