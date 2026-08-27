@@ -19,6 +19,8 @@ import {
   Divider,
   Stack,
   useMediaQuery,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
@@ -40,6 +42,7 @@ import {
   VerifiedUser,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import BMWBG from '../assets/BMWBG.png';
 import axiosInstance from '../utils/axiosConfig';
 import blogo from '../assets/blogo.png';
@@ -52,8 +55,14 @@ const Home = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { addToCart, isInCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -98,9 +107,46 @@ const Home = () => {
     return { label: 'Disponibile', color: '#2e7d32', icon: <CheckCircle sx={{ fontSize: 14 }} /> };
   };
 
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (product, e) => {
+    e.stopPropagation();
+    
+    if (product.stock === 0) {
+      setSnackbar({
+        open: true,
+        message: 'Prodotto esaurito!',
+        severity: 'error',
+      });
+      return;
+    }
+
+    const result = addToCart(product, 1, product.brand);
+    if (result.success) {
+      setSnackbar({
+        open: true,
+        message: result.message,
+        severity: 'success',
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: result.message || 'Errore durante l\'aggiunta al carrello',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ open: false, message: '', severity: 'success' });
+  };
+
   const ProductCard = ({ product, index }) => {
     const [isHovered, setIsHovered] = useState(false);
     const status = getStockStatus(product.stock);
+    const inCart = isInCart(product._id);
 
     return (
       <motion.div
@@ -110,6 +156,7 @@ const Home = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ height: '100%' }}
+        onClick={() => handleProductClick(product._id)}
       >
         <Card
           sx={{
@@ -120,6 +167,7 @@ const Home = () => {
             transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             position: 'relative',
             overflow: 'hidden',
+            cursor: 'pointer',
             '&:hover': {
               boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
               transform: 'translateY(-12px)',
@@ -244,6 +292,10 @@ const Home = () => {
               <Button
                 variant="contained"
                 startIcon={<Visibility />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleProductClick(product._id);
+                }}
                 sx={{
                   backgroundColor: 'rgba(255,255,255,0.95)',
                   color: '#1a1a2e',
@@ -389,8 +441,9 @@ const Home = () => {
               fullWidth
               variant="contained"
               startIcon={<ShoppingCart sx={{ fontSize: 18 }} />}
+              disabled={product.stock === 0}
               sx={{
-                backgroundColor: '#2e7d32',
+                backgroundColor: inCart ? '#ff9800' : '#2e7d32',
                 borderRadius: '14px',
                 textTransform: 'none',
                 fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
@@ -399,12 +452,16 @@ const Home = () => {
                 py: 1.2,
                 boxShadow: '0 4px 16px rgba(46,125,50,0.2)',
                 '&:hover': {
-                  backgroundColor: '#1b5e20',
+                  backgroundColor: inCart ? '#f57c00' : '#1b5e20',
                   boxShadow: '0 8px 24px rgba(46,125,50,0.3)',
                 },
+                '&:disabled': {
+                  backgroundColor: '#cccccc',
+                },
               }}
+              onClick={(e) => handleAddToCart(product, e)}
             >
-              Aggiungi al Carrello
+              {product.stock === 0 ? 'Esaurito' : inCart ? 'Nel carrello' : 'Al Carrello'}
             </Button>
             <IconButton
               sx={{
@@ -419,6 +476,10 @@ const Home = () => {
                   color: '#2e7d32',
                 },
                 transition: 'all 0.3s ease',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add to wishlist logic here
               }}
             >
               <FavoriteBorder sx={{ fontSize: 20 }} />
@@ -514,7 +575,6 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  {/* Small green text */}
                   <Typography
                     sx={{
                       fontSize: '0.85rem',
@@ -529,7 +589,6 @@ const Home = () => {
                     Premium Car Accessories
                   </Typography>
 
-                  {/* Main Heading */}
                   <Typography
                     variant="h1"
                     sx={{
@@ -544,14 +603,11 @@ const Home = () => {
                   >
                     Door Logo
                     <br />
-                    <span style={{ 
-                      color: '#4caf50',
-                    }}>
+                    <span style={{ color: '#4caf50' }}>
                       Projectors
                     </span>
                   </Typography>
 
-                  {/* Description */}
                   <Typography
                     sx={{
                       fontSize: { xs: '0.95rem', sm: '1.05rem' },
@@ -566,7 +622,6 @@ const Home = () => {
                     per la tua auto. Scopri la nostra collezione esclusiva.
                   </Typography>
 
-                  {/* Single Button - Rectangle with rounded corners */}
                   <Button
                     variant="contained"
                     size="large"
@@ -839,252 +894,256 @@ const Home = () => {
         </Box>
       </Box>
 
+      {/* Products Section */}
+      <Box id="products" sx={{ py: { xs: 4, sm: 4, md: 8 }, backgroundColor: '#ffffff' }}>
+        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4, lg: 6 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: '#1a1a2e',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontSize: { xs: '1.25rem', sm: '1.25rem', md: '2rem' },
+                letterSpacing: '-0.02em',
+                fontWeight: 700,
+              }}
+            >
+              Prodotti in Evidenza
+            </Typography>
+            <Button
+              component="a"
+              href="/products"
+              endIcon={<ArrowForward />}
+              sx={{
+                color: '#2e7d32',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textTransform: 'none',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: '#1b5e20',
+                },
+              }}
+            >
+              Visualizza Tutti
+            </Button>
+          </Box>
 
-{/* Products Section */}
-<Box id="products" sx={{ py: { xs: 4, sm: 4, md: 8 }, backgroundColor: '#ffffff' }}>
-  <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4, lg: 6 } }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          color: '#1a1a2e',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          fontSize: { xs: '1.25rem', sm: '1.25rem', md: '2rem' },
-          letterSpacing: '-0.02em',
-          fontWeight: 700,
-        }}
-      >
-        Prodotti in Evidenza
-      </Typography>
-      <Button
-        component="a"
-        href="/products"
-        endIcon={<ArrowForward />}
-        sx={{
-          color: '#2e7d32',
-          fontWeight: 600,
-          fontSize: '0.95rem',
-          textTransform: 'none',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          '&:hover': {
-            backgroundColor: 'transparent',
-            color: '#1b5e20',
-          },
-        }}
-      >
-        Visualizza Tutti
-      </Button>
-    </Box>
-
-    {loading ? (
-      <Grid container spacing={3}>
-        {[...Array(6)].map((_, index) => (
-          <Grid size={{ xs: 6, sm: 6, md: 4 }} key={index}>
-            <Card sx={{ borderRadius: '16px' }}>
-              <Skeleton variant="rectangular" height={{ xs: 180, sm: 220, md: 280 }} />
-              <CardContent>
-                <Skeleton variant="text" height={30} width="80%" />
-                <Skeleton variant="text" height={20} width="60%" />
-                <Skeleton variant="text" height={20} width="40%" />
-                <Skeleton variant="text" height={40} width="100%" />
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    ) : (
-      <Grid container spacing={3}>
-        {products.slice(0, 6).map((product, index) => {
-          // Get brand color
-          const getBrandColor = (brand) => {
-            const colors = {
-              BMW: '#0072ce',
-              Audi: '#8c8c8c',
-              Mercedes: '#0a0a0a',
-              Porsche: '#d5001c',
-              Volkswagen: '#001a4b',
-            };
-            return colors[brand] || '#6b7280';
-          };
-
-          return (
-            <Grid size={{ xs: 6, sm: 6, md: 4 }} key={product._id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  borderRadius: '16px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  border: '1px solid rgba(0,0,0,0.04)',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
-                    transform: 'translateY(-4px)',
-                  },
-                }}
-              >
-                {/* Product Image - ONLY THIS CHANGED */}
-                <Box sx={{ 
-                  position: 'relative', 
-                  overflow: 'hidden', 
-                  backgroundColor: '#f8f9fa',
-                  height: { xs: '160px', sm: '200px', md: '280px' }
-                }}>
-                  <CardMedia
-                    component="img"
-                    image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
-                    alt={product.name}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      backgroundColor: '#f8f9fa',
-                    }}
-                  />
-                  
-                  {/* Brand Badge - Top Right of Image */}
-                  <Chip
-                    label={product.brand}
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      backgroundColor: getBrandColor(product.brand),
-                      color: '#ffffff',
-                      fontWeight: 600,
-                      fontSize: '0.65rem',
-                      height: '28px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      '& .MuiChip-label': {
-                        px: 2,
-                      },
-                    }}
-                  />
-                </Box>
-
-                <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  {/* Product Name */}
-                  <Typography
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: '1.05rem',
-                      color: '#1a1a2e',
-                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                      mb: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      minHeight: 56,
-                    }}
-                  >
-                    {product.name}
-                  </Typography>
-
-                  {/* Rating only - Brand removed from here */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                    <Rating
-                      value={product.rating || 0}
-                      precision={0.5}
-                      size="small"
-                      readOnly
-                      sx={{
-                        '& .MuiRating-iconFilled': {
-                          color: '#2e7d32',
-                        },
-                        '& .MuiRating-iconHover': {
-                          color: '#2e7d32',
-                        },
-                      }}
-                    />
-                  </Box>
-
-                  {/* Description - different character limits */}
-                  <Typography
-                    sx={{
-                      fontSize: '0.85rem',
-                      color: '#6b7280',
-                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                      lineHeight: 1.6,
-                      mb: 2,
-                      display: '-webkit-box',
-                      WebkitLineClamp: { xs: 2, sm: 2, md: 3 },
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      flex: 1,
-                    }}
-                  >
-                    {product.description || 'Nessuna descrizione disponibile'}
-                  </Typography>
-
-                  {/* Price */}
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: '1.3rem',
-                      color: '#1a1a2e',
-                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                      mb: 2,
-                    }}
-                  >
-                    €{product.price}
-                  </Typography>
-
-                  {/* Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1.5 }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      sx={{
-                        backgroundColor: '#2e7d32',
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                        fontWeight: 600,
-                        fontSize: { xs: '0.75rem', sm: '0.75rem', md: '0.85rem' },
-                        py: 1.2,
-                        boxShadow: '0 4px 16px rgba(46,125,50,0.2)',
-                        '&:hover': {
-                          backgroundColor: '#1b5e20',
-                          boxShadow: '0 8px 24px rgba(46,125,50,0.3)',
-                        },
-                      }}
-                    >
-                      Dettagli
-                    </Button>
-                    <IconButton
-                      sx={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '10px',
-                        color: '#6b7280',
-                        backgroundColor: '#f9f9f9',
-                        width: 48,
-                        height: 48,
-                        '&:hover': {
-                          backgroundColor: '#f0f0f0',
-                          borderColor: '#d0d0d0',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <ShoppingCart sx={{ fontSize: 22 }} />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
+          {loading ? (
+            <Grid container spacing={3}>
+              {[...Array(6)].map((_, index) => (
+                <Grid size={{ xs: 6, sm: 6, md: 4 }} key={index}>
+                  <Card sx={{ borderRadius: '16px' }}>
+                    <Skeleton variant="rectangular" height={{ xs: 180, sm: 220, md: 280 }} />
+                    <CardContent>
+                      <Skeleton variant="text" height={30} width="80%" />
+                      <Skeleton variant="text" height={20} width="60%" />
+                      <Skeleton variant="text" height={20} width="40%" />
+                      <Skeleton variant="text" height={40} width="100%" />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          );
-        })}
-      </Grid>
-    )}
-  </Container>
-</Box>
+          ) : (
+            <Grid container spacing={3}>
+              {products.slice(0, 6).map((product, index) => {
+                return (
+                  <Grid size={{ xs: 6, sm: 6, md: 4 }} key={product._id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        borderRadius: '16px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        border: '1px solid rgba(0,0,0,0.04)',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                          transform: 'translateY(-4px)',
+                        },
+                      }}
+                      onClick={() => handleProductClick(product._id)}
+                    >
+                      {/* Product Image */}
+                      <Box sx={{ 
+                        position: 'relative', 
+                        overflow: 'hidden', 
+                        backgroundColor: '#f8f9fa',
+                        height: { xs: '160px', sm: '200px', md: '280px' }
+                      }}>
+                        <CardMedia
+                          component="img"
+                          image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+                          alt={product.name}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            backgroundColor: '#f8f9fa',
+                          }}
+                        />
+                        
+                        {/* Brand Badge - Top Right of Image */}
+                        <Chip
+                          label={product.brand}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            backgroundColor: getBrandColor(product.brand),
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            fontSize: '0.65rem',
+                            height: '28px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            '& .MuiChip-label': {
+                              px: 2,
+                            },
+                          }}
+                        />
+                      </Box>
 
+                      <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {/* Product Name */}
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '1.05rem',
+                            color: '#1a1a2e',
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                            mb: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: 56,
+                          }}
+                        >
+                          {product.name}
+                        </Typography>
 
-      {/* Brands Section - Full Width Grid 4 columns */}
+                        {/* Rating only */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                          <Rating
+                            value={product.rating || 0}
+                            precision={0.5}
+                            size="small"
+                            readOnly
+                            sx={{
+                              '& .MuiRating-iconFilled': {
+                                color: '#2e7d32',
+                              },
+                              '& .MuiRating-iconHover': {
+                                color: '#2e7d32',
+                              },
+                            }}
+                          />
+                        </Box>
+
+                        {/* Description */}
+                        <Typography
+                          sx={{
+                            fontSize: '0.85rem',
+                            color: '#6b7280',
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                            lineHeight: 1.6,
+                            mb: 2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: { xs: 2, sm: 2, md: 3 },
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            flex: 1,
+                          }}
+                        >
+                          {product.description || 'Nessuna descrizione disponibile'}
+                        </Typography>
+
+                        {/* Price */}
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '1.3rem',
+                            color: '#1a1a2e',
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                            mb: 2,
+                          }}
+                        >
+                          €{product.price}
+                        </Typography>
+
+                        {/* Buttons */}
+                        <Box sx={{ display: 'flex', gap: 1.5 }}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            disabled={product.stock === 0}
+                            sx={{
+                              backgroundColor: isInCart(product._id) ? '#ff9800' : '#2e7d32',
+                              borderRadius: '10px',
+                              textTransform: 'none',
+                              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                              fontWeight: 600,
+                              fontSize: { xs: '0.75rem', sm: '0.75rem', md: '0.85rem' },
+                              py: 1.2,
+                              boxShadow: '0 4px 16px rgba(46,125,50,0.2)',
+                              '&:hover': {
+                                backgroundColor: isInCart(product._id) ? '#f57c00' : '#1b5e20',
+                                boxShadow: '0 8px 24px rgba(46,125,50,0.3)',
+                              },
+                              '&:disabled': {
+                                backgroundColor: '#cccccc',
+                              },
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isInCart(product._id)) {
+                                handleProductClick(product._id);
+                              } else {
+                                handleAddToCart(product, e);
+                              }
+                            }}
+                          >
+                            {product.stock === 0 ? 'Esaurito' : isInCart(product._id) ? 'Nel carrello' : 'Aggiungi'}
+                          </Button>
+                          <IconButton
+                            sx={{
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '10px',
+                              color: '#6b7280',
+                              backgroundColor: '#f9f9f9',
+                              width: 48,
+                              height: 48,
+                              '&:hover': {
+                                backgroundColor: '#f0f0f0',
+                                borderColor: '#d0d0d0',
+                              },
+                              transition: 'all 0.3s ease',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProductClick(product._id);
+                            }}
+                          >
+                            <Visibility sx={{ fontSize: 22 }} />
+                          </IconButton>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </Container>
+      </Box>
+
+      {/* Brands Section */}
       <Box
         sx={{
           py: 2,
@@ -1127,263 +1186,280 @@ const Home = () => {
           </Box>
 
           <Box sx={{ width: '100%' }}>
-  <Grid container spacing={0} sx={{ width: '100%' }}>
-    <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-          px: 1,
-          transition: 'all 0.3s ease',
-          borderRight: { sm: '1px solid #e8e8e8' },
-          '&:hover': {
-            backgroundColor: 'rgba(46,125,50,0.05)',
-          },
-        }}
-      >
-        <Box
-          component="img"
-          src={alogo}
-          alt="Audi"
-          sx={{
-            width: { xs: 80, sm: 100, md: 160, lg: 160 },
-            height: { xs: 50, sm: 65, md: 100, lg: 100 },
-            mb: 1,
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
-            fontWeight: 700,
-            color: '#1a1a2e',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            textAlign: 'center',
-            textTransform: 'uppercase',
-          }}
-        >
-          Audi
-        </Typography>
-      </Box>
-    </Grid>
+            <Grid container spacing={0} sx={{ width: '100%' }}>
+              <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 2,
+                    px: 1,
+                    transition: 'all 0.3s ease',
+                    borderRight: { sm: '1px solid #e8e8e8' },
+                    '&:hover': {
+                      backgroundColor: 'rgba(46,125,50,0.05)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={alogo}
+                    alt="Audi"
+                    sx={{
+                      width: { xs: 80, sm: 100, md: 160, lg: 160 },
+                      height: { xs: 50, sm: 65, md: 100, lg: 100 },
+                      mb: 1,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
+                      fontWeight: 700,
+                      color: '#1a1a2e',
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Audi
+                  </Typography>
+                </Box>
+              </Grid>
 
-    <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-          px: 1,
-          transition: 'all 0.3s ease',
-          borderRight: { sm: '1px solid #e8e8e8' },
-          '&:hover': {
-            backgroundColor: 'rgba(46,125,50,0.05)',
-          },
-        }}
-      >
-        <Box
-          component="img"
-          src={blogo}
-          alt="BMW"
-          sx={{
-            width: { xs: 80, sm: 100, md: 160, lg: 160 },
-            height: { xs: 50, sm: 65, md: 100, lg: 100 },
-            mb: 1,
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
-            fontWeight: 700,
-            color: '#1a1a2e',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            textAlign: 'center',
-            textTransform: 'uppercase',
-          }}
-        >
-          BMW
-        </Typography>
-      </Box>
-    </Grid>
+              <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 2,
+                    px: 1,
+                    transition: 'all 0.3s ease',
+                    borderRight: { sm: '1px solid #e8e8e8' },
+                    '&:hover': {
+                      backgroundColor: 'rgba(46,125,50,0.05)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={blogo}
+                    alt="BMW"
+                    sx={{
+                      width: { xs: 80, sm: 100, md: 160, lg: 160 },
+                      height: { xs: 50, sm: 65, md: 100, lg: 100 },
+                      mb: 1,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
+                      fontWeight: 700,
+                      color: '#1a1a2e',
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    BMW
+                  </Typography>
+                </Box>
+              </Grid>
 
-    <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-          px: 1,
-          transition: 'all 0.3s ease',
-          borderRight: { sm: '1px solid #e8e8e8' },
-          '&:hover': {
-            backgroundColor: 'rgba(46,125,50,0.05)',
-          },
-        }}
-      >
-        <Box
-          component="img"
-          src={mlogo}
-          alt="Mercedes"
-          sx={{
-            width: { xs: 65, sm: 85, md: 130, lg: 130 },
-            height: { xs: 50, sm: 65, md: 100, lg: 100 },
-            mb: 1,
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
-            fontWeight: 700,
-            color: '#1a1a2e',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            textAlign: 'center',
-            textTransform: 'uppercase',
-          }}
-        >
-          Mercedes
-        </Typography>
-      </Box>
-    </Grid>
+              <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 2,
+                    px: 1,
+                    transition: 'all 0.3s ease',
+                    borderRight: { sm: '1px solid #e8e8e8' },
+                    '&:hover': {
+                      backgroundColor: 'rgba(46,125,50,0.05)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={mlogo}
+                    alt="Mercedes"
+                    sx={{
+                      width: { xs: 65, sm: 85, md: 130, lg: 130 },
+                      height: { xs: 50, sm: 65, md: 100, lg: 100 },
+                      mb: 1,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
+                      fontWeight: 700,
+                      color: '#1a1a2e',
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Mercedes
+                  </Typography>
+                </Box>
+              </Grid>
 
-    <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-          px: 1,
-          transition: 'all 0.3s ease',
-          borderRight: { sm: '1px solid #e8e8e8' },
-          '&:hover': {
-            backgroundColor: 'rgba(46,125,50,0.05)',
-          },
-        }}
-      >
-        <Box
-          component="img"
-          src={volk}
-          alt="Volkswagen"
-          sx={{
-            width: { xs: 80, sm: 100, md: 160, lg: 160 },
-            height: { xs: 50, sm: 65, md: 100, lg: 100 },
-            mb: 1,
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
-            fontWeight: 700,
-            color: '#1a1a2e',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            textAlign: 'center',
-            textTransform: 'uppercase',
-          }}
-        >
-          Volkswagen
-        </Typography>
-      </Box>
-    </Grid>
-  </Grid>
-</Box>
+              <Grid item xs={6} sm={3} sx={{ width: '25%', flexBasis: '25%', maxWidth: '25%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 2,
+                    px: 1,
+                    transition: 'all 0.3s ease',
+                    borderRight: { sm: '1px solid #e8e8e8' },
+                    '&:hover': {
+                      backgroundColor: 'rgba(46,125,50,0.05)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={volk}
+                    alt="Volkswagen"
+                    sx={{
+                      width: { xs: 80, sm: 100, md: 160, lg: 160 },
+                      height: { xs: 50, sm: 65, md: 100, lg: 100 },
+                      mb: 1,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' },
+                      fontWeight: 700,
+                      color: '#1a1a2e',
+                      fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Volkswagen
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
         </Box>
       </Box>
 
-
-{/* Promo Section */}
-<Box
-  sx={{
-    backgroundColor: '#ffffff',
-    width: '100%',
-    py: { xs: 1, sm: 1.5, md: 2 },
-  }}
->
-  <Box
-    sx={{
-      mx: { xs: 1.5, sm: 2, md: 4 },
-      height: { xs: '80px', sm: '100px', md: '160px' },
-      borderRadius: { xs: '20px', sm: '30px', md: '50px' },
-      overflow: 'hidden',
-      position: 'relative',
-      backgroundImage: `url(${imp})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundColor: '#ffffff',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    }}
-  >
-    {/* Content */}
-    <Box
-      sx={{
-        position: 'relative',
-        zIndex: 1,
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        px: { xs: 2, sm: 3, md: 5 },
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2, md: 2 } }}>
-        {/* Shield Icon */}
+      {/* Promo Section */}
+      <Box
+        sx={{
+          backgroundColor: '#ffffff',
+          width: '100%',
+          py: { xs: 1, sm: 1.5, md: 2 },
+        }}
+      >
         <Box
           sx={{
-            width: { xs: 28, sm: 32, md: 64 },
-            height: { xs: 28, sm: 32, md: 64 },
-            borderRadius: '50%',
-            backgroundColor: 'transparent',
-            display: 'flex',
+            mx: { xs: 1.5, sm: 2, md: 4 },
+            height: { xs: '80px', sm: '100px', md: '160px' },
+            borderRadius: { xs: '20px', sm: '30px', md: '50px' },
+            overflow: 'hidden',
+            position: 'relative',
+            backgroundImage: `url(${imp})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              px: { xs: 2, sm: 3, md: 5 },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2, md: 2 } }}>
+              <Box
+                sx={{
+                  width: { xs: 28, sm: 32, md: 64 },
+                  height: { xs: 28, sm: 32, md: 64 },
+                  borderRadius: '50%',
+                  backgroundColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2e7d32',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                }}
+              >
+                <VerifiedUser sx={{ fontSize: { xs: 24, sm: 32, md: 48 } }} />
+              </Box>
+
+              <Box>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                    fontSize: { xs: '0.85rem', sm: '1rem', md: '1.5rem' },
+                    letterSpacing: '-0.02em',
+                    lineHeight: { xs: 1.1, sm: 1.15, md: 1.2 },
+                    textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  Migliora la tua esperienza di guida
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: 400,
+                    color: 'rgba(255,255,255,0.95)',
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                    fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.95rem' },
+                    mt: { xs: 0, sm: 0.15, md: 0.25 },
+                    textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Un piccolo dettaglio. Una grande impressione.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            '& .MuiAlert-icon': { fontSize: 24 },
+            minWidth: 320,
             alignItems: 'center',
-            justifyContent: 'center',
-            color: '#2e7d32',
-            flexShrink: 0,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
           }}
+          variant="filled"
         >
-          <VerifiedUser sx={{ fontSize: { xs: 24, sm: 32, md: 48 } }} />
-        </Box>
-
-        {/* Text */}
-        <Box>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: '#ffffff',
-              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-              fontSize: { xs: '0.85rem', sm: '1rem', md: '1.5rem' },
-              letterSpacing: '-0.02em',
-              lineHeight: { xs: 1.1, sm: 1.15, md: 1.2 },
-              textShadow: '0 2px 12px rgba(0,0,0,0.5)',
-            }}
-          >
-            Migliora la tua esperienza di guida
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.95)',
-              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-              fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.95rem' },
-              mt: { xs: 0, sm: 0.15, md: 0.25 },
-              textShadow: '0 2px 12px rgba(0,0,0,0.5)',
-              display: { xs: 'none', sm: 'block' },
-            }}
-          >
-            Un piccolo dettaglio. Una grande impressione.
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
-  </Box>
-</Box>
-   
-
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

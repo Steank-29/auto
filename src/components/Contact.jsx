@@ -12,8 +12,6 @@ import {
   Alert,
   useTheme,
   alpha,
-  Card,
-  CardContent,
   InputAdornment,
   CircularProgress,
   Stack,
@@ -32,13 +30,11 @@ import {
   Headset,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosConfig';
 import BDG from '../assets/BDGC.png';
 
 const Contact = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -81,6 +77,7 @@ const Contact = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error for this field when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -104,27 +101,60 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form first
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    
     try {
       const response = await axiosInstance.post('/contact', formData);
+      
       if (response.data.success) {
+        // Success - show success message
         setSnackbar({
           open: true,
-          message: 'Il tuo messaggio è stato inviato con successo! Ti risponderemo al più presto.',
+          message: response.data.message || 'Il tuo messaggio è stato inviato con successo! Ti risponderemo al più presto.',
           severity: 'success',
         });
+        
+        // Reset form
         setFormData({ name: '', email: '', subject: '', message: '' });
         if (formRef.current) formRef.current.reset();
       }
     } catch (error) {
+      // Error is already handled by axios interceptor
       console.error('Error sending message:', error);
-      setSnackbar({
-        open: true,
-        message: 'Si è verificato un errore. Per favore riprova più tardi.',
-        severity: 'error',
-      });
+      
+      // Check if error has specific field errors (validation)
+      if (error.errors && Array.isArray(error.errors)) {
+        // Handle validation errors from backend
+        const fieldErrors = {};
+        error.errors.forEach(err => {
+          // Try to match field names from error messages
+          if (err.includes('nome')) fieldErrors.name = err;
+          else if (err.includes('email')) fieldErrors.email = err;
+          else if (err.includes('oggetto')) fieldErrors.subject = err;
+          else if (err.includes('messaggio')) fieldErrors.message = err;
+        });
+        if (Object.keys(fieldErrors).length > 0) {
+          setFormErrors(fieldErrors);
+        } else {
+          // Generic error message
+          setSnackbar({
+            open: true,
+            message: error.message || 'Si è verificato un errore. Per favore riprova più tardi.',
+            severity: 'error',
+          });
+        }
+      } else {
+        // Show error from interceptor or generic message
+        setSnackbar({
+          open: true,
+          message: error.message || 'Si è verificato un errore. Per favore riprova più tardi.',
+          severity: 'error',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -410,7 +440,7 @@ const Contact = () => {
             </motion.div>
           </Grid>
 
-          {/* Right Column - Contact Info in One Box */}
+          {/* Right Column - Contact Info */}
           <Grid size={{ xs: 12, md: 5 }}>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -509,7 +539,7 @@ const Contact = () => {
           </Grid>
         </Grid>
 
-        {/* Trust Badges Section - Below the form and info */}
+        {/* Trust Badges Section */}
         <Box
           sx={{
             mt: 6,

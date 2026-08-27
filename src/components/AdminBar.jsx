@@ -24,6 +24,12 @@ import {
   Fab,
   SwipeableDrawer,
   ListItemAvatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   Dashboard,
@@ -76,6 +82,8 @@ const AdminBar = ({ children }) => {
     out: 0,
     total: 0,
   });
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Get user from localStorage
   useEffect(() => {
@@ -164,6 +172,16 @@ const AdminBar = ({ children }) => {
     setMobileDrawerOpen(false);
   };
 
+  // Handle alert dialog for unavailable features
+  const handleFeatureUnavailable = (featureName) => {
+    setAlertMessage(`La funzionalità "${featureName}" non è ancora disponibile. Il marketplace è ancora in fase di sviluppo.`);
+    setAlertDialogOpen(true);
+  };
+
+  const handleAlertClose = () => {
+    setAlertDialogOpen(false);
+  };
+
   // Navigation items with stock badges
   const navItems = [
     {
@@ -230,34 +248,37 @@ const AdminBar = ({ children }) => {
       badge: 12,
     },
     {
-      text: 'Clienti',
+      text: 'Contatto',
       icon: <People />,
-      path: '/admin/customers',
+      path: '/admin/contact',
     },
     {
       text: 'Analytics',
       icon: <BarChart />,
       path: '/admin/analytics',
+      isUnavailable: true,
+      glowRed: true,
       subItems: [
-        { text: 'Vendite', path: '/admin/analytics/sales' },
-        { text: 'Traffico', path: '/admin/analytics/traffic' },
-        { text: 'Report', path: '/admin/analytics/reports' },
+        { text: 'Vendite', path: '/admin/analytics/sales', isUnavailable: true },
+        { text: 'Traffico', path: '/admin/analytics/traffic', isUnavailable: true },
+        { text: 'Report', path: '/admin/analytics/reports', isUnavailable: true },
       ],
     },
     {
       text: 'Marketing',
       icon: <LocalOffer />,
       path: '/admin/marketing',
+      isUnavailable: true,
+      glowRed: true,
       subItems: [
-        { text: 'Promozioni', path: '/admin/marketing/promotions' },
-        { text: 'Newsletter', path: '/admin/marketing/newsletter' },
+        { text: 'Promozioni', path: '/admin/marketing/promotions', isUnavailable: true },
+        { text: 'Newsletter', path: '/admin/marketing/newsletter', isUnavailable: true },
       ],
     },
   ];
 
   const bottomNavItems = [
     { text: 'Impostazioni', icon: <Settings />, path: '/admin/settings' },
-    { text: 'Supporto', icon: <Help />, path: '/admin/support' },
   ];
 
   // Collapse component for submenus
@@ -293,18 +314,26 @@ const AdminBar = ({ children }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isActive = location.pathname === item.path ||
       (hasSubItems && item.subItems.some(sub => location.pathname === sub.path));
+    const isUnavailable = item.isUnavailable || false;
+    const glowRed = item.glowRed || false;
+
+    const handleItemClick = () => {
+      if (isUnavailable) {
+        handleFeatureUnavailable(item.text);
+        return;
+      }
+      if (hasSubItems) {
+        handleMenuToggle(item.text);
+      } else {
+        handleNavigate(item.path);
+      }
+    };
 
     return (
       <Box key={item.text}>
         <ListItem
           button
-          onClick={() => {
-            if (hasSubItems) {
-              handleMenuToggle(item.text);
-            } else {
-              handleNavigate(item.path);
-            }
-          }}
+          onClick={handleItemClick}
           sx={{
             borderRadius: '12px',
             mb: 0.5,
@@ -313,29 +342,78 @@ const AdminBar = ({ children }) => {
             backgroundColor: isActive ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
             color: isActive ? '#2e7d32' : '#555555',
             '&:hover': {
-              backgroundColor: 'rgba(46, 125, 50, 0.05)',
-              color: '#2e7d32',
+              backgroundColor: isUnavailable ? 'rgba(255, 68, 68, 0.08)' : 'rgba(46, 125, 50, 0.05)',
+              color: isUnavailable ? '#ff4444' : '#2e7d32',
             },
             transition: 'all 0.2s ease',
+            ...(glowRed && {
+              animation: 'glowPulse 2s ease-in-out infinite',
+              '@keyframes glowPulse': {
+                '0%': {
+                  boxShadow: '0 0 0px rgba(255, 68, 68, 0)',
+                },
+                '50%': {
+                  boxShadow: '0 0 20px rgba(255, 68, 68, 0.15), inset 0 0 20px rgba(255, 68, 68, 0.05)',
+                },
+                '100%': {
+                  boxShadow: '0 0 0px rgba(255, 68, 68, 0)',
+                },
+              },
+            }),
           }}
         >
           <ListItemIcon
             sx={{
-              color: isActive ? '#2e7d32' : '#888888',
+              color: isUnavailable ? '#ff4444' : (isActive ? '#2e7d32' : '#888888'),
               minWidth: 40,
+              ...(glowRed && {
+                animation: 'iconGlowPulse 2s ease-in-out infinite',
+                '@keyframes iconGlowPulse': {
+                  '0%': {
+                    filter: 'drop-shadow(0 0 0px rgba(255, 68, 68, 0))',
+                  },
+                  '50%': {
+                    filter: 'drop-shadow(0 0 8px rgba(255, 68, 68, 0.4))',
+                  },
+                  '100%': {
+                    filter: 'drop-shadow(0 0 0px rgba(255, 68, 68, 0))',
+                  },
+                },
+              }),
             }}
           >
             {item.icon}
           </ListItemIcon>
           <ListItemText
-            primary={item.text}
-            sx={{
-              '& .MuiListItemText-primary': {
-                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.9rem',
-              },
-            }}
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: '0.9rem',
+                    color: isUnavailable ? '#ff4444' : 'inherit',
+                  }}
+                >
+                  {item.text}
+                </Typography>
+                {isUnavailable && (
+                  <Chip
+                    label="Prossimamente"
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255,68,68,0.12)',
+                      color: '#ff4444',
+                      fontWeight: 600,
+                      fontSize: '0.5rem',
+                      height: '16px',
+                      borderRadius: '4px',
+                    }}
+                  />
+                )}
+              </Box>
+            }
           />
           {item.badge && typeof item.badge === 'number' && (
             <Chip
@@ -358,7 +436,12 @@ const AdminBar = ({ children }) => {
             </Box>
           )}
           {hasSubItems && (
-            <IconButton size="small" sx={{ color: '#888888' }}>
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: isUnavailable ? '#ff4444' : '#888888',
+              }}
+            >
               {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </IconButton>
           )}
@@ -368,33 +451,61 @@ const AdminBar = ({ children }) => {
             <List component="div" disablePadding>
               {item.subItems.map((subItem) => {
                 const isSubActive = location.pathname === subItem.path;
+                const isSubUnavailable = subItem.isUnavailable || false;
                 return (
                   <ListItem
                     key={subItem.text}
                     button
-                    onClick={() => handleNavigate(subItem.path)}
+                    onClick={() => {
+                      if (isSubUnavailable) {
+                        handleFeatureUnavailable(subItem.text);
+                        return;
+                      }
+                      handleNavigate(subItem.path);
+                    }}
                     sx={{
                       pl: 6,
                       py: 1,
                       borderRadius: '12px',
                       mb: 0.3,
                       backgroundColor: isSubActive ? 'rgba(46, 125, 50, 0.06)' : 'transparent',
-                      color: isSubActive ? '#2e7d32' : '#666666',
+                      color: isSubUnavailable ? '#ff4444' : (isSubActive ? '#2e7d32' : '#666666'),
                       '&:hover': {
-                        backgroundColor: 'rgba(46, 125, 50, 0.04)',
-                        color: '#2e7d32',
+                        backgroundColor: isSubUnavailable ? 'rgba(255, 68, 68, 0.06)' : 'rgba(46, 125, 50, 0.04)',
+                        color: isSubUnavailable ? '#ff4444' : '#2e7d32',
                       },
                     }}
                   >
                     <ListItemText
-                      primary={subItem.text}
-                      sx={{
-                        '& .MuiListItemText-primary': {
-                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                          fontSize: '0.85rem',
-                          fontWeight: isSubActive ? 500 : 400,
-                        },
-                      }}
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                              fontSize: '0.85rem',
+                              fontWeight: isSubActive ? 500 : 400,
+                              color: isSubUnavailable ? '#ff4444' : 'inherit',
+                            }}
+                          >
+                            {subItem.text}
+                          </Typography>
+                          {isSubUnavailable && (
+                            <Chip
+                              label="Prossimamente"
+                              size="small"
+                              sx={{
+                                backgroundColor: 'rgba(255,68,68,0.12)',
+                                color: '#ff4444',
+                                fontWeight: 600,
+                                fontSize: '0.5rem',
+                                height: '16px',
+                                borderRadius: '4px',
+                              }}
+                            />
+                          )}
+                        </Box>
+                      }
                     />
                     {subItem.badge && subItem.badge}
                   </ListItem>
@@ -1131,6 +1242,118 @@ const AdminBar = ({ children }) => {
 
       {/* Mobile Drawer */}
       {(isMobile || isTablet) && renderMobileDrawer()}
+
+      {/* Alert Dialog for Unavailable Features */}
+      <Dialog
+        open={alertDialogOpen}
+        onClose={handleAlertClose}
+        PaperProps={{
+          sx: {
+            borderRadius: '20px',
+            maxWidth: '420px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+            p: 3,
+            textAlign: 'center',
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255,255,255,0.3)',
+            }}
+          >
+            <Warning sx={{ fontSize: 32, color: '#ffffff' }} />
+          </Box>
+          <Typography
+            sx={{
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '1.2rem',
+              mt: 2,
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+            }}
+          >
+            Funzionalità Non Disponibile
+          </Typography>
+        </Box>
+
+        <DialogContent sx={{ p: 4, pt: 3 }}>
+          <DialogContentText
+            sx={{
+              color: '#1a1a2e',
+              fontSize: '1rem',
+              lineHeight: 1.6,
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+              textAlign: 'center',
+            }}
+          >
+            {alertMessage}
+          </DialogContentText>
+          <Box
+            sx={{
+              mt: 3,
+              p: 2,
+              backgroundColor: 'rgba(255,68,68,0.04)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,68,68,0.08)',
+              textAlign: 'center',
+            }}
+          >
+            <Typography
+              sx={{
+                color: '#6b7280',
+                fontSize: '0.85rem',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+              }}
+            >
+              ⚠️ Questa sezione sarà disponibile nelle prossime settimane
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            p: 3,
+            pt: 0,
+            justifyContent: 'center',
+          }}
+        >
+          <Button
+            onClick={handleAlertClose}
+            variant="contained"
+            sx={{
+              backgroundColor: '#2e7d32',
+              borderRadius: '14px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+              px: 4,
+              py: 1.2,
+              '&:hover': {
+                backgroundColor: '#1b5e20',
+              },
+            }}
+          >
+            Ho Capito
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Main Content */}
       <Box

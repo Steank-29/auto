@@ -8,6 +8,7 @@ const connectDB = require('./config/database');
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 // Load env vars
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

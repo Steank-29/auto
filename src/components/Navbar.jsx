@@ -22,6 +22,7 @@ import {
   Paper,
   Stack,
   Collapse,
+  SwipeableDrawer,
 } from "@mui/material";
 import {
   ShoppingCartOutlined,
@@ -36,6 +37,7 @@ import {
   ExpandMore,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 import PA from "../assets/PA.png";
 
 const Navbar = () => {
@@ -43,6 +45,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart();
+  
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
@@ -113,6 +117,19 @@ const Navbar = () => {
     navigate("/signin");
   };
 
+  const handleRemoveFromCart = (productId) => {
+    removeFromCart(productId);
+  };
+
+  const handleUpdateQuantity = (productId, newQuantity) => {
+    updateQuantity(productId, newQuantity);
+  };
+
+  const handleCheckout = () => {
+    handleCartClose();
+    navigate("/checkout");
+  };
+
   // Render text with "Auto" in green
   const renderText = () => {
     if (!displayText) return null;
@@ -132,21 +149,13 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { text: "Home", hasSub: false },
-    { text: "Prodotti", hasSub: true, subItems: ["Side Door", "Front Logo", "Trank Logo"] },
-    { text: "Contatti", hasSub: false },
+    { text: "Home", hasSub: false, path: "/" },
+    { text: "Prodotti", hasSub: true, path: "/products", subItems: ["Side Door", "Front Logo", "Trank Logo"] },
+    { text: "Contatti", hasSub: false, path: "/contact" },
   ];
 
-  const cartItems = [
-    { id: 1, name: "Audi RS6", price: "€89.990", quantity: 1, image: PA },
-    { id: 2, name: "BMW M4", price: "€72.500", quantity: 2, image: PA },
-    { id: 3, name: "Mercedes AMG", price: "€95.200", quantity: 1, image: PA },
-  ];
-
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + parseFloat(item.price.replace("€", "").replace(".", "")) * item.quantity,
-    0
-  );
+  const cartCount = getCartCount();
+  const cartTotal = getCartTotal();
 
   return (
     <>
@@ -276,7 +285,7 @@ const Navbar = () => {
                   </IconButton>
                 )}
                 <IconButton
-                  onClick={handleCartOpen}
+                  onClick={cartDrawerOpen ? handleCartClose : handleCartOpen}
                   sx={{
                     color: "#141010",
                     "&:hover": {
@@ -285,22 +294,26 @@ const Navbar = () => {
                     },
                   }}
                 >
-                  <Badge 
-                    badgeContent={cartItems.length} 
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        backgroundColor: "#2e7d32",
-                        color: "#ffffff",
-                        fontWeight: 700,
-                        fontSize: "0.7rem",
-                        height: "20px",
-                        minWidth: "20px",
-                        borderRadius: "50%",
-                      },
-                    }}
-                  >
-                    <ShoppingCartOutlined />
-                  </Badge>
+                  {cartDrawerOpen ? (
+                    <Close />
+                  ) : (
+                    <Badge 
+                      badgeContent={cartCount} 
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#2e7d32",
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          fontSize: "0.7rem",
+                          height: "20px",
+                          minWidth: "20px",
+                          borderRadius: "50%",
+                        },
+                      }}
+                    >
+                      <ShoppingCartOutlined />
+                    </Badge>
+                  )}
                 </IconButton>
               </Box>
             </>
@@ -349,6 +362,11 @@ const Navbar = () => {
                 {navItems.map((item) => (
                   <Button
                     key={item.text}
+                    onClick={() => {
+                      if (item.path) {
+                        navigate(item.path);
+                      }
+                    }}
                     sx={{
                       color: "#141010",
                       fontWeight: 500,
@@ -435,7 +453,7 @@ const Navbar = () => {
                 />
 
                 <IconButton
-                  onClick={handleCartOpen}
+                  onClick={cartDrawerOpen ? handleCartClose : handleCartOpen}
                   sx={{
                     color: "#141010",
                     "&:hover": {
@@ -445,7 +463,7 @@ const Navbar = () => {
                   }}
                 >
                   <Badge 
-                    badgeContent={cartItems.length} 
+                    badgeContent={cartCount} 
                     sx={{
                       "& .MuiBadge-badge": {
                         backgroundColor: "#2e7d32",
@@ -646,7 +664,16 @@ const Navbar = () => {
             {navItems.map((item) => (
               <Box key={item.text}>
                 <ListItem
-                  onClick={item.hasSub ? handleProductsToggle : handleDrawerClose}
+                  onClick={() => {
+                    if (item.hasSub) {
+                      handleProductsToggle();
+                    } else {
+                      handleDrawerClose();
+                      if (item.path) {
+                        navigate(item.path);
+                      }
+                    }
+                  }}
                   sx={{
                     borderRadius: "12px",
                     mb: 0.5,
@@ -669,7 +696,10 @@ const Navbar = () => {
                     }}
                   />
                   {item.hasSub && (
-                    <IconButton size="small" onClick={handleProductsToggle}>
+                    <IconButton size="small" onClick={(e) => {
+                      e.stopPropagation();
+                      handleProductsToggle();
+                    }}>
                       {productsOpen ? <ExpandLess /> : <ExpandMore />}
                     </IconButton>
                   )}
@@ -680,7 +710,10 @@ const Navbar = () => {
                       {item.subItems.map((subItem) => (
                         <ListItem
                           key={subItem}
-                          onClick={handleDrawerClose}
+                          onClick={() => {
+                            handleDrawerClose();
+                            navigate(`/products?category=${subItem.toLowerCase().replace(' ', '-')}`);
+                          }}
                           sx={{
                             pl: 4,
                             py: 1.2,
@@ -761,16 +794,18 @@ const Navbar = () => {
       </Drawer>
 
       {/* Cart Drawer */}
-      <Drawer
+      <SwipeableDrawer
         anchor="right"
         open={cartDrawerOpen}
         onClose={handleCartClose}
+        onOpen={handleCartOpen}
+        disableBackdropTransition={false}
         sx={{
           "& .MuiDrawer-paper": {
             width: { xs: "100%", sm: "420px" },
             bgcolor: "#ffffff",
             boxShadow: "-4px 0 20px rgba(0,0,0,0.1)",
-            borderRadius: "20px 0 0 20px",
+            borderRadius: { xs: "0px", sm: "20px 0 0 20px" },
           },
         }}
       >
@@ -802,7 +837,7 @@ const Navbar = () => {
                   fontWeight: 400,
                 }}
               >
-                ({cartItems.length} articoli)
+                ({cartCount} articoli)
               </Typography>
             </Typography>
             <IconButton onClick={handleCartClose}>
@@ -816,7 +851,7 @@ const Navbar = () => {
                 <Stack spacing={2}>
                   {cartItems.map((item) => (
                     <Paper
-                      key={item.id}
+                      key={item.productId}
                       elevation={0}
                       sx={{
                         p: 2,
@@ -833,7 +868,7 @@ const Navbar = () => {
                       }}
                     >
                       <Avatar
-                        src={item.image}
+                        src={item.mainImage ? `http://localhost:5000${item.mainImage}` : PA}
                         variant="rounded"
                         sx={{
                           width: 70,
@@ -855,17 +890,27 @@ const Navbar = () => {
                         <Typography
                           sx={{
                             fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                            color: "#666666",
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          {item.brand} • {item.model}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                             color: "#000000",
                             fontSize: "1.1rem",
                             fontWeight: 700,
                             mt: 0.5,
                           }}
                         >
-                          {item.price}
+                          €{item.price}
                         </Typography>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
                           <IconButton
                             size="small"
+                            onClick={() => handleUpdateQuantity(item.productId, Math.max(1, item.quantity - 1))}
                             sx={{
                               border: "1px solid #e0e0e0",
                               borderRadius: "8px",
@@ -887,6 +932,7 @@ const Navbar = () => {
                           </Typography>
                           <IconButton
                             size="small"
+                            onClick={() => handleUpdateQuantity(item.productId, Math.min(item.maxStock || 99, item.quantity + 1))}
                             sx={{
                               border: "1px solid #e0e0e0",
                               borderRadius: "8px",
@@ -899,6 +945,7 @@ const Navbar = () => {
                         </Box>
                       </Box>
                       <IconButton
+                        onClick={() => handleRemoveFromCart(item.productId)}
                         sx={{
                           color: "#999",
                           "&:hover": { color: "#ff0000" },
@@ -944,7 +991,7 @@ const Navbar = () => {
                       color: "#000000",
                     }}
                   >
-                    €{totalPrice.toLocaleString()}
+                    €{cartTotal.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box
@@ -972,7 +1019,7 @@ const Navbar = () => {
                       color: "#4CAF50",
                     }}
                   >
-                    Gratuita
+                    {cartTotal > 100 ? "Gratuita" : "€9.90"}
                   </Typography>
                 </Box>
                 <Divider sx={{ my: 2 }} />
@@ -1001,16 +1048,13 @@ const Navbar = () => {
                       color: "#000000",
                     }}
                   >
-                    €{totalPrice.toLocaleString()}
+                    €{(cartTotal + (cartTotal > 100 ? 0 : 9.90)).toFixed(2)}
                   </Typography>
                 </Box>
                 <Button
                   fullWidth
                   variant="contained"
-                  onClick={() => {
-                    handleCartClose();
-                    console.log("Vai al checkout");
-                  }}
+                  onClick={handleCheckout}
                   sx={{
                     backgroundColor: "#000000",
                     borderRadius: "25px",
@@ -1086,7 +1130,7 @@ const Navbar = () => {
             </Box>
           )}
         </Box>
-      </Drawer>
+      </SwipeableDrawer>
 
       <style>
         {`
