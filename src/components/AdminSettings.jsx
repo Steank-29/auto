@@ -672,7 +672,7 @@ const AdminSettings = () => {
                                 </Typography>
                               )}
                               <Typography sx={{ color: '#6b7280', fontSize: '0.75rem', mt: 0.5 }}>
-                                Consigliato: Immagine quadrata, max 5MB
+                                Consigliato: Immagine quadrata, max 5 MB
                               </Typography>
                             </Box>
                           </Box>
