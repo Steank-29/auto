@@ -60,6 +60,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../utils/axiosConfig';
 import { useCart } from '../context/CartContext';
 import BDGC from '../assets/BDGC.png';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Custom PayPal Text Component
 const PayPalText = () => (
@@ -339,7 +340,7 @@ const handlePayPalPayment = async () => {
               >
                 <CardMedia
                   component="img"
-                  image={currentImage ? `http://localhost:5000${currentImage}` : '/placeholder.png'}
+                  image={getImageUrl(product.mainImage)}
                   alt={product.name}
                   sx={{
                     width: '100vw',
@@ -495,7 +496,7 @@ const handlePayPalPayment = async () => {
                     >
                       <CardMedia
                         component="img"
-                        image={`http://localhost:5000${image}`}
+                        image={getImageUrl(image)}
                         alt={`${product.name} - ${index + 1}`}
                         sx={{
                           width: '100vw',

@@ -64,6 +64,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axiosInstance from '../utils/axiosConfig';
+import { getImageUrl } from '../utils/imageUtils';
 
 const AdminStock = () => {
   const theme = useTheme();
@@ -687,7 +688,7 @@ const AdminStock = () => {
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar
-                                  src={product.mainImage ? `http://localhost:5000${product.mainImage}` : ''}
+                                  src={product.mainImage ? getImageUrl(product.mainImage) : ''}
                                   variant="rounded"
                                   sx={{
                                     width: 40,

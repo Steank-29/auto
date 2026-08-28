@@ -63,6 +63,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import PA from '../assets/PA.png';
 import BDG from '../assets/BDG.png';
 import axiosInstance from '../utils/axiosConfig';
+import { getImageUrl } from '../utils/imageUtils';
 
 const AdminBar = ({ children }) => {
   const theme = useTheme();
@@ -573,7 +574,7 @@ const AdminBar = ({ children }) => {
           }}
         >
           <Avatar
-            src={user.image ? `http://localhost:5000${user.image}` : ''}
+            src={user.image ? getImageUrl(user.image) : ''}
             sx={{
               width: 56,
               height: 56,
@@ -832,7 +833,7 @@ const AdminBar = ({ children }) => {
                 }}
               >
                 <Avatar
-                  src={user?.image ? `http://localhost:5000${user.image}` : ''}
+                  src={user?.image ? getImageUrl(user.image) : ''}
                   sx={{
                     width: 36,
                     height: 36,
@@ -877,7 +878,7 @@ const AdminBar = ({ children }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={user?.image ? `http://localhost:5000${user.image}` : ''}
+              src={user?.image ? getImageUrl(user.image) : ''}
               sx={{
                 width: 56,
                 height: 56,

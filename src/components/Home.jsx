@@ -50,6 +50,7 @@ import alogo from '../assets/alogo.png';
 import mlogo from '../assets/mlogo.png';
 import volk from '../assets/volk.png';
 import imp from '../assets/imp.png';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Home = () => {
   const theme = useTheme();
@@ -257,7 +258,7 @@ const Home = () => {
             <CardMedia
               component="img"
               height={280}
-              image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+              image={getImageUrl(product.mainImage)}
               alt={product.name}
               sx={{
                 objectFit: 'cover',
@@ -978,7 +979,7 @@ const Home = () => {
                       }}>
                         <CardMedia
                           component="img"
-                          image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+                          image={getImageUrl(product.mainImage)}
                           alt={product.name}
                           sx={{
                             width: '100%',

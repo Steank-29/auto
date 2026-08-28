@@ -34,6 +34,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axiosInstance from '../utils/axiosConfig';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Products = () => {
   const theme = useTheme();
@@ -240,7 +241,7 @@ const Products = () => {
             <CardMedia
               component="img"
               height={280}
-              image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+              image={getImageUrl(product.mainImage)}
               alt={product.name}
               sx={{
                 objectFit: 'cover',
@@ -557,7 +558,7 @@ const Products = () => {
                     }}>
                       <CardMedia
                         component="img"
-                        image={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+                        image={getImageUrl(product.mainImage)}
                         alt={product.name}
                         sx={{
                           width: '100%',

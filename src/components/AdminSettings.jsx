@@ -84,6 +84,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axiosInstance from '../utils/axiosConfig';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Tab Panel Component
 const TabPanel = ({ children, value, index, ...other }) => (
@@ -175,7 +176,7 @@ const AdminSettings = () => {
           dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split('T')[0] : '',
           gender: userData.gender || '',
         });
-        setImagePreview(userData.image ? `http://localhost:5000${userData.image}` : null);
+        setImagePreview(userData.image ? getImageUrl(userData.image) : null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -487,7 +488,7 @@ const AdminSettings = () => {
                     }
                   >
                     <Avatar
-                      src={imagePreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=2e7d32&color=fff&size=128`}
+                      src={imagePreview || getImageUrl(profile.image) || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=2e7d32&color=fff&size=128`}
                       sx={{
                         width: 100,
                         height: 100,
@@ -636,7 +637,7 @@ const AdminSettings = () => {
                         <Grid item xs={12}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
                             <Avatar
-                              src={imagePreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileForm.name)}&background=2e7d32&color=fff&size=128`}
+                              src={imagePreview || getImageUrl(profile.image) || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileForm.name)}&background=2e7d32&color=fff&size=128`}
                               sx={{
                                 width: 100,
                                 height: 100,
@@ -767,7 +768,7 @@ const AdminSettings = () => {
                                   dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
                                   gender: profile.gender || '',
                                 });
-                                setImagePreview(profile.image ? `http://localhost:5000${profile.image}` : null);
+                                setImagePreview(profile.image ? getImageUrl(profile.image) : null);
                                 setImageFile(null);
                                 setProfileErrors({});
                               }}

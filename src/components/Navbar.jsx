@@ -39,6 +39,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import PA from "../assets/PA.png";
+import { getImageUrl } from "../utils/imageUtils";
 
 const Navbar = () => {
   const theme = useTheme();
@@ -868,7 +869,7 @@ const Navbar = () => {
                       }}
                     >
                       <Avatar
-                        src={item.mainImage ? `http://localhost:5000${item.mainImage}` : PA}
+                        src={item.mainImage ? getImageUrl(item.mainImage) : PA}
                         variant="rounded"
                         sx={{
                           width: 70,

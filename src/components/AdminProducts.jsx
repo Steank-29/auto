@@ -70,7 +70,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axiosInstance from '../utils/axiosConfig';
-
+import { getImageUrl } from '../utils/imageUtils';
 
 const AdminProducts = () => {
   const theme = useTheme();
@@ -201,8 +201,8 @@ const AdminProducts = () => {
         specifications: product.specifications || {},
       });
       setImagePreviews({ 
-        main: product.mainImage ? `http://localhost:5000${product.mainImage}` : null, 
-        more: product.moreImages?.map(img => `http://localhost:5000${img}`) || [] 
+        main: product.mainImage ? getImageUrl(product.mainImage) : null, 
+        more: product.moreImages?.map(img => getImageUrl(img)) || [] 
       });
     } else {
       setEditingProduct(null);
@@ -896,7 +896,7 @@ const AdminProducts = () => {
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar
-                                  src={product.mainImage ? `http://localhost:5000${product.mainImage}` : '/placeholder.png'}
+                                  src={product.mainImage ? getImageUrl(product.mainImage) : '/placeholder.png'}
                                   variant="rounded"
                                   sx={{
                                     width: 48,
@@ -1068,7 +1068,7 @@ const AdminProducts = () => {
                                   >
                                     {product.mainImage ? (
                                       <img
-                                        src={`http://localhost:5000${product.mainImage}`}
+                                        src={getImageUrl(product.mainImage)}
                                         alt={product.name}
                                         style={{
                                           width: '100%',
@@ -2228,7 +2228,7 @@ const AdminProducts = () => {
               </Typography>
             </Box>
             <Avatar
-              src={product.mainImage ? `http://localhost:5000${product.mainImage}` : ''}
+              src={product.mainImage ? getImageUrl(product.mainImage) : ''}
               variant="rounded"
               sx={{
                 width: 32,

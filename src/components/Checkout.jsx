@@ -43,6 +43,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axiosInstance from '../utils/axiosConfig';
 import PA from '../assets/PA.png';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Custom PayPal Text Component
 const PayPalText = () => (
@@ -275,7 +276,7 @@ useEffect(() => {
                 }}
               >
                 <Avatar
-                  src={item.mainImage ? `http://localhost:5000${item.mainImage}` : PA}
+                  src={item.mainImage ? getImageUrl(item.mainImage) : PA}
                   variant="rounded"
                   sx={{ width: 60, height: 60, borderRadius: '12px' }}
                 />
