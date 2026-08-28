@@ -20,7 +20,7 @@ if (!clientId || !clientSecret) {
 
 // Configure PayPal
 paypal.configure({
-  mode: process.env.PAYPAL_MODE || 'sandbox',
+  mode: process.env.PAYPAL_MODE || 'live',
   client_id: clientId.trim(), // Remove any whitespace
   client_secret: clientSecret.trim(), // Remove any whitespace
 });
