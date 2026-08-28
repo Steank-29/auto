@@ -10,8 +10,8 @@ console.log('PAYPAL_CANCEL_URL:', process.env.PAYPAL_CANCEL_URL);
 console.log('=============================');
 
 // Make sure the credentials are properly loaded
-const clientId = 'BAAX_nKfe_eqI6sh_zpeyc_hxFIrmGGgamJOgG7_6QQVipU0ZXqZ4qn0-f6dMR_5ti7PyJOABlIz_Zaml8';
-const clientSecret = 'EMY0bm-zHm5QBLhOogRN3lK6uglOf6sqh7PeSBxZd-ZFnLukHsPVUr4toSs9kmT33KDFGznPLvz_wHIr';
+const clientId = 'BAA1RZOo3yNwYdN2S0PHcnVbizs7kj8V-oZ9NAqdkzEVU5EvaVMrxseckA1chrPKHy5jipQgNXpyixnYjI';
+const clientSecret = 'EC0v9k8TNFuaCdOgjEO45ZFEOfo8maXJdVqt7D5BtxVSZTyEb-7iAiQ0NLRgBshTHCNyhsWDVXKb5gG_';
 
 if (!clientId || !clientSecret) {
   console.error('❌ PayPal credentials missing! Please check your .env file');
