@@ -137,49 +137,85 @@ const Checkout = () => {
     setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const handlePayPalPayment = async () => {
-    if (!validateForm()) return;
-    
-    setIsProcessing(true);
-    try {
-      const orderData = {
-        items: cartItems.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          brand: item.brand,
-          model: item.model,
-          price: item.price,
-          quantity: item.quantity,
-          selectedLogo: item.selectedLogo,
-        })),
-        customer: formData,
-        subtotal: cartTotal,
-        shipping: shippingCost,
-        total: grandTotal,
-      };
+const handlePayPalPayment = async () => {
+  if (!validateForm()) return;
+  
+  setIsProcessing(true);
+  try {
+    const orderData = {
+      items: cartItems.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        brand: item.brand,
+        model: item.model,
+        price: item.price,
+        quantity: item.quantity,
+        selectedLogo: item.selectedLogo,
+      })),
+      customer: formData,
+      subtotal: cartTotal,
+      shipping: shippingCost,
+      total: grandTotal,
+    };
 
-      const response = await axiosInstance.post('/paypal/create-order', orderData);
-      
-      if (response.data.success) {
-        window.location.href = response.data.approvalUrl;
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'Errore nella creazione dell\'ordine. Riprova più tardi.',
-          severity: 'error',
-        });
-      }
-    } catch (error) {
-      console.error('Error creating PayPal order:', error);
+    console.log('Sending order data:', orderData);
+    
+    const response = await axiosInstance.post('/paypal/create-order', orderData);
+    
+    console.log('PayPal response:', response.data);
+    
+    if (response.data.success) {
+      // Redirect to PayPal approval URL
+      window.location.href = response.data.approvalUrl;
+    } else {
       setSnackbar({
         open: true,
-        message: 'Errore nella creazione dell\'ordine. Riprova più tardi.',
+        message: response.data.message || 'Errore nella creazione dell\'ordine. Riprova più tardi.',
         severity: 'error',
       });
-    } finally {
-      setIsProcessing(false);
     }
-  };
+  } catch (error) {
+    console.error('Error creating PayPal order:', error);
+    setSnackbar({
+      open: true,
+      message: error.response?.data?.message || 'Errore nella creazione dell\'ordine. Riprova più tardi.',
+      severity: 'error',
+    });
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
+// Add useEffect to handle payment success/failure from redirect
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get('payment');
+  const orderId = urlParams.get('orderId');
+
+  if (paymentStatus === 'success' && orderId) {
+    setOrderComplete(true);
+    setOrderId(orderId);
+    // Clear cart after successful payment
+    setTimeout(() => {
+      clearCart();
+    }, 1000);
+  } else if (paymentStatus === 'failed') {
+    setSnackbar({
+      open: true,
+      message: 'Il pagamento non è stato completato. Per favore riprova.',
+      severity: 'error',
+    });
+    // Remove payment params from URL
+    window.history.replaceState({}, document.title, '/checkout');
+  } else if (paymentStatus === 'cancelled') {
+    setSnackbar({
+      open: true,
+      message: 'Pagamento annullato. Puoi riprovare quando vuoi.',
+      severity: 'info',
+    });
+    window.history.replaceState({}, document.title, '/checkout');
+  }
+}, []);
 
   const handlePlaceOrder = () => {
     handlePayPalPayment();

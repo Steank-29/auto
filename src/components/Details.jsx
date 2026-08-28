@@ -207,29 +207,43 @@ const Details = () => {
     setPaymentDialogOpen(true);
   };
 
-  const handlePayPalPayment = async () => {
-    setIsProcessing(true);
-    try {
-      const orderData = {
+const handlePayPalPayment = async () => {
+  setIsProcessing(true);
+  try {
+    const orderData = {
+      items: [{
         productId: product._id,
+        name: product.name,
+        brand: product.brand,
+        model: product.model,
+        price: product.price,
         quantity: quantity,
         selectedLogo: selectedLogo,
-        customer: formData,
-        totalAmount: product.price * quantity,
-      };
-      const response = await axiosInstance.post('/paypal/create-order', orderData);
-      if (response.data.success) {
-        window.location.href = response.data.approvalUrl;
-      } else {
-        setFormErrors({ submit: 'Errore nella creazione dell\'ordine. Riprova più tardi.' });
-      }
-    } catch (error) {
-      console.error('Error creating PayPal order:', error);
-      setFormErrors({ submit: 'Errore nella creazione dell\'ordine. Riprova più tardi.' });
-    } finally {
-      setIsProcessing(false);
+      }],
+      customer: formData,
+      subtotal: product.price * quantity,
+      shipping: 0, // Single product shipping
+      total: product.price * quantity,
+    };
+
+    const response = await axiosInstance.post('/paypal/create-order', orderData);
+    
+    if (response.data.success) {
+      window.location.href = response.data.approvalUrl;
+    } else {
+      setFormErrors({ 
+        submit: response.data.message || 'Errore nella creazione dell\'ordine. Riprova più tardi.' 
+      });
     }
-  };
+  } catch (error) {
+    console.error('Error creating PayPal order:', error);
+    setFormErrors({ 
+      submit: error.response?.data?.message || 'Errore nella creazione dell\'ordine. Riprova più tardi.' 
+    });
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   // Get all images for the product
   const getAllImages = () => {
