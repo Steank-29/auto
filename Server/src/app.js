@@ -21,7 +21,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5172', 'http://localhost:5173'],
+  origin: ['http://localhost:5172', 'http://localhost:5173', 'prestigeauto.it', 'www.prestigeauto.it'],
   credentials: true,
 }));
 app.use(express.json());
