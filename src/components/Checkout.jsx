@@ -318,160 +318,161 @@ useEffect(() => {
   );
 
   // Shipping Step Component
-  const ShippingStep = () => (
-    <Box>
-      <Typography sx={{ fontWeight: 600, color: '#1a1a2e', mb: 3 }}>
-        Dati di Spedizione
-      </Typography>
-      
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Nome Completo"
-            name="fullName"
-            placeholder="Mario Rossi"
-            value={formData.fullName}
-            onChange={handleFormChange}
-            error={!!formErrors.fullName}
-            helperText={formErrors.fullName}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Person sx={{ color: '#6b7280', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' }, width: '80vw' }}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="mario@example.com"
-            value={formData.email}
-            onChange={handleFormChange}
-            error={!!formErrors.email}
-            helperText={formErrors.email}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Email sx={{ color: '#6b7280', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' }, width: '80vw' }}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Telefono"
-            name="phone"
-            placeholder="+39 3XX XXX XXXX"
-            value={formData.phone}
-            onChange={handleFormChange}
-            error={!!formErrors.phone}
-            helperText={formErrors.phone}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Phone sx={{ color: '#6b7280', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Indirizzo"
-            name="address"
-            placeholder="Via Roma 123"
-            value={formData.address}
-            onChange={handleFormChange}
-            error={!!formErrors.address}
-            helperText={formErrors.address}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Home sx={{ color: '#6b7280', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Città"
-            name="city"
-            placeholder="Roma"
-            value={formData.city}
-            onChange={handleFormChange}
-            error={!!formErrors.city}
-            helperText={formErrors.city}
-            required
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="CAP"
-            name="postalCode"
-            placeholder="00100"
-            value={formData.postalCode}
-            onChange={handleFormChange}
-            error={!!formErrors.postalCode}
-            helperText={formErrors.postalCode}
-            required
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Paese"
-            name="country"
-            value={formData.country}
-            onChange={handleFormChange}
-            disabled
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Note (opzionale)"
-            name="notes"
-            placeholder="Istruzioni di consegna speciali..."
-            value={formData.notes}
-            onChange={handleFormChange}
-            multiline
-            rows={2}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', width: '80vw' } }}
-          />
-        </Grid>
+// Shipping Step Component
+const ShippingStep = () => (
+  <Box>
+    <Typography sx={{ fontWeight: 600, color: '#1a1a2e', mb: 3 }}>
+      Dati di Spedizione
+    </Typography>
+    
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Nome Completo"
+          name="fullName"
+          placeholder="Mario Rossi"
+          value={formData.fullName}
+          onChange={handleFormChange}
+          error={!!formErrors.fullName}
+          helperText={formErrors.fullName}
+          required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Person sx={{ color: '#6b7280', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
       </Grid>
-    </Box>
-  );
+
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Email"
+          name="email"
+          type="email"
+          placeholder="mario@example.com"
+          value={formData.email}
+          onChange={handleFormChange}
+          error={!!formErrors.email}
+          helperText={formErrors.email}
+          required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Email sx={{ color: '#6b7280', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Telefono"
+          name="phone"
+          placeholder="+39 3XX XXX XXXX"
+          value={formData.phone}
+          onChange={handleFormChange}
+          error={!!formErrors.phone}
+          helperText={formErrors.phone}
+          required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Phone sx={{ color: '#6b7280', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Indirizzo"
+          name="address"
+          placeholder="Via Roma 123"
+          value={formData.address}
+          onChange={handleFormChange}
+          error={!!formErrors.address}
+          helperText={formErrors.address}
+          required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Home sx={{ color: '#6b7280', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Città"
+          name="city"
+          placeholder="Roma"
+          value={formData.city}
+          onChange={handleFormChange}
+          error={!!formErrors.city}
+          helperText={formErrors.city}
+          required
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="CAP"
+          name="postalCode"
+          placeholder="00100"
+          value={formData.postalCode}
+          onChange={handleFormChange}
+          error={!!formErrors.postalCode}
+          helperText={formErrors.postalCode}
+          required
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Paese"
+          name="country"
+          value={formData.country}
+          onChange={handleFormChange}
+          disabled
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Note (opzionale)"
+          name="notes"
+          placeholder="Istruzioni di consegna speciali..."
+          value={formData.notes}
+          onChange={handleFormChange}
+          multiline
+          rows={2}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+        />
+      </Grid>
+    </Grid>
+  </Box>
+);
 
   // Payment Step Component
   const PaymentStep = () => (
