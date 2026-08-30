@@ -617,108 +617,6 @@ const handlePayPalPayment = async () => {
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 3, textTransform: 'uppercase' }}>
                 Dati per la Spedizione
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Nome Completo"
-                    name="fullName"
-                    placeholder="Mario Rossi"
-                    value={formData.fullName}
-                    onChange={handleFormChange}
-                    error={!!formErrors.fullName}
-                    helperText={formErrors.fullName}
-                    required
-                    InputProps={{ startAdornment: <InputAdornment position="start"><Person sx={{ color: '#6b7280' }} /></InputAdornment> }}
-                    sx={{ 
-                      '& .MuiOutlinedInput-root': { 
-                        borderRadius: '12px', 
-                        bgcolor: '#f8f9fa',
-                        width: '100vw',
-                        maxWidth: '100%',
-                      },
-                      width: '100vw',
-                      maxWidth: '100%',
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    type="email"
-                    placeholder="mario@example.com"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                    error={!!formErrors.email}
-                    helperText={formErrors.email}
-                    required
-                    InputProps={{ startAdornment: <InputAdornment position="start"><Email sx={{ color: '#6b7280' }} /></InputAdornment> }}
-                    sx={{ 
-                      '& .MuiOutlinedInput-root': { 
-                        borderRadius: '12px', 
-                        bgcolor: '#f8f9fa',
-                        width: '100vw',
-                        maxWidth: '100%',
-                      },
-                      width: '100vw',
-                      maxWidth: '100%',
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Telefono"
-                    name="phone"
-                    placeholder="+39 3XX XXX XXXX"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                    error={!!formErrors.phone}
-                    helperText={formErrors.phone}
-                    required
-                    InputProps={{ startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#6b7280' }} /></InputAdornment> }}
-                    sx={{ 
-                      '& .MuiOutlinedInput-root': { 
-                        borderRadius: '12px', 
-                        bgcolor: '#f8f9fa',
-                        width: '100vw',
-                        maxWidth: '100%',
-                      },
-                      width: '100vw',
-                      maxWidth: '100%',
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Indirizzo di Spedizione"
-                    name="address"
-                    placeholder="Via Roma 123, 00100 Roma"
-                    value={formData.address}
-                    onChange={handleFormChange}
-                    error={!!formErrors.address}
-                    helperText={formErrors.address}
-                    required
-                    multiline
-                    rows={2}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><Home sx={{ color: '#6b7280' }} /></InputAdornment> }}
-                    sx={{ 
-                      '& .MuiOutlinedInput-root': { 
-                        borderRadius: '12px', 
-                        bgcolor: '#f8f9fa',
-                        width: '100vw',
-                        maxWidth: '100%',
-                      },
-                      width: '100vw',
-                      maxWidth: '100%',
-                      mb: 4,
-                    }}
-                  />
-                </Grid>
-              </Grid>
 
               {/* Actions */}
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -740,24 +638,6 @@ const handlePayPalPayment = async () => {
                   }}
                 >
                   {product.stock === 0 ? 'Esaurito' : 'Al Carrello'}
-                </Button>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={product.stock === 0}
-                  onClick={handleBuyNow}
-                  sx={{
-                    bgcolor: '#ff6b35',
-                    borderRadius: '12px',
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    py: 1.5,
-                    '&:hover': { bgcolor: '#e55a2b' },
-                    '&:disabled': { bgcolor: '#cccccc' },
-                  }}
-                >
-                  Acquista Ora
                 </Button>
               </Box>
 
