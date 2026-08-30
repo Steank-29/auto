@@ -9,7 +9,7 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const contactRoutes = require('./routes/contactRoutes');
-const paypalRoutes = require('./routes/paypalRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 // Load env vars
 dotenv.config();
@@ -34,7 +34,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/paypal', paypalRoutes);
+app.use('/api/orders', orderRoutes);
+
 
 // Test route
 app.get('/api/test', (req, res) => {

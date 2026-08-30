@@ -30,6 +30,8 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Link,
+  alpha,
 } from '@mui/material';
 import {
   Dashboard,
@@ -58,12 +60,17 @@ import {
   Wc,
   AdminPanelSettings,
   Close,
+  Receipt,
+  Payment,
+  LocalShipping,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PA from '../assets/PA.png';
 import BDG from '../assets/BDG.png';
 import axiosInstance from '../utils/axiosConfig';
 import { getImageUrl } from '../utils/imageUtils';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 const AdminBar = ({ children }) => {
   const theme = useTheme();
@@ -85,6 +92,11 @@ const AdminBar = ({ children }) => {
   });
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  
+  // Notification states
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
 
   // Get user from localStorage
   useEffect(() => {
@@ -123,6 +135,108 @@ const AdminBar = ({ children }) => {
     fetchStockStats();
   }, []);
 
+  // Fetch notifications (orders)
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Set up interval to check for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifs(true);
+    try {
+      // Fetch recent orders (last 7 days)
+      const response = await axiosInstance.get('/orders/admin/orders?limit=20&page=1');
+      
+      if (response.data.success) {
+        const orders = response.data.data || [];
+        
+        // Filter orders from today and yesterday
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        // Create notifications from orders
+        const notificationsList = orders.map(order => {
+          const orderDate = new Date(order.orderDate);
+          const isToday = orderDate >= today;
+          const isYesterday = orderDate >= yesterday && orderDate < today;
+          
+          let timeLabel = format(orderDate, 'HH:mm', { locale: it });
+          if (isToday) {
+            timeLabel = `Oggi alle ${timeLabel}`;
+          } else if (isYesterday) {
+            timeLabel = `Ieri alle ${timeLabel}`;
+          } else {
+            timeLabel = format(orderDate, 'dd/MM/yyyy HH:mm', { locale: it });
+          }
+          
+          // Determine notification type
+          let icon = <Receipt sx={{ fontSize: 20 }} />;
+          let color = '#1976d2';
+          let title = `Nuovo ordine #${order.orderId.substring(0, 8)}`;
+          
+          if (order.paymentStatus === 'completed') {
+            icon = <Payment sx={{ fontSize: 20 }} />;
+            color = '#2e7d32';
+            title = `Pagamento confermato #${order.orderId.substring(0, 8)}`;
+          } else if (order.status === 'shipped') {
+            icon = <LocalShipping sx={{ fontSize: 20 }} />;
+            color = '#9c27b0';
+            title = `Ordine spedito #${order.orderId.substring(0, 8)}`;
+          } else if (order.status === 'delivered') {
+            icon = <CheckCircle sx={{ fontSize: 20 }} />;
+            color = '#2e7d32';
+            title = `Ordine consegnato #${order.orderId.substring(0, 8)}`;
+          } else if (order.status === 'cancelled') {
+            icon = <Cancel sx={{ fontSize: 20 }} />;
+            color = '#ff4444';
+            title = `Ordine annullato #${order.orderId.substring(0, 8)}`;
+          }
+          
+          return {
+            id: order._id,
+            orderId: order.orderId,
+            title: title,
+            customer: order.customer?.fullName || 'Cliente',
+            time: timeLabel,
+            date: orderDate,
+            icon: icon,
+            color: color,
+            total: order.total,
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            isRead: false, // You can implement read status if needed
+            path: `/admin/orders`
+          };
+        });
+        
+        // Sort by date (newest first)
+        notificationsList.sort((a, b) => b.date - a.date);
+        
+        // Get only today's and yesterday's orders for notifications
+        const recentNotifications = notificationsList.filter(
+          n => n.date >= yesterday
+        );
+        
+        setNotifications(recentNotifications);
+        
+        // Count unread (all are unread for now)
+        const unread = recentNotifications.length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -154,6 +268,7 @@ const AdminBar = ({ children }) => {
     navigate(path);
     if (isMobile) setSidebarOpen(false);
     setMobileDrawerOpen(false);
+    handleNotifClose();
   };
 
   const handleLogout = () => {
@@ -181,6 +296,10 @@ const AdminBar = ({ children }) => {
 
   const handleAlertClose = () => {
     setAlertDialogOpen(false);
+  };
+
+  const formatDate = (date) => {
+    return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: it });
   };
 
   // Navigation items with stock badges
@@ -246,7 +365,7 @@ const AdminBar = ({ children }) => {
       text: 'Ordini',
       icon: <ShoppingBag />,
       path: '/admin/orders',
-      badge: 12,
+      badge: unreadCount > 0 ? unreadCount : null,
     },
     {
       text: 'Contatto',
@@ -791,34 +910,42 @@ const AdminBar = ({ children }) => {
               </Tooltip>
             )}
 
-            <Tooltip title="Notifiche">
-              <IconButton
-                onClick={handleNotifOpen}
-                sx={{
-                  color: '#555555',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0,0,0,0.04)',
-                  },
-                }}
-              >
-                <Badge
-                  badgeContent={3}
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      backgroundColor: '#ff4444',
-                      color: '#ffffff',
-                      fontWeight: 600,
-                      fontSize: '0.65rem',
-                      height: '18px',
-                      minWidth: '18px',
-                      borderRadius: '50%',
-                    },
-                  }}
-                >
-                  <Notifications />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+<Tooltip title={`Notifiche (${unreadCount} nuove)`}>
+  <IconButton
+    onClick={handleNotifOpen}
+    sx={{
+      color: '#555555',
+      '&:hover': {
+        backgroundColor: 'rgba(0,0,0,0.04)',
+      },
+    }}
+  >
+    <Badge
+      badgeContent={unreadCount > 0 ? unreadCount : null}
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      sx={{
+        '& .MuiBadge-badge': {
+          backgroundColor: unreadCount > 0 ? '#ff4444' : '#6b7280',
+          color: '#ffffff',
+          fontWeight: 700,
+          fontSize: '0.5rem', // Smaller font
+          height: '16px', // Smaller height
+          minWidth: '16px', // Smaller width
+          borderRadius: '50%',
+          padding: '0 4px',
+          transform: 'scale(1) translate(20%, -20%)', // Better positioning
+          transition: 'transform 0.3s ease',
+          border: '2px solid #ffffff', // White border for better visibility
+        },
+      }}
+    >
+      <Notifications />
+    </Badge>
+  </IconButton>
+</Tooltip>
 
             {/* Profile Avatar with user info */}
             <Tooltip title={user?.name || 'Profile'}>
@@ -994,21 +1121,23 @@ const AdminBar = ({ children }) => {
         </MenuItem>
       </Menu>
 
-      {/* Notification Menu */}
+      {/* Notification Menu - Shows real orders */}
       <Menu
         anchorEl={notifAnchorEl}
         open={Boolean(notifAnchorEl)}
         onClose={handleNotifClose}
         sx={{
           '& .MuiPaper-root': {
-            width: '320px',
+            width: '360px',
+            maxHeight: '480px',
             borderRadius: '16px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             mt: 1,
+            overflow: 'hidden',
           },
         }}
       >
-        <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0' }}>
+        <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography
             sx={{
               fontWeight: 700,
@@ -1019,66 +1148,168 @@ const AdminBar = ({ children }) => {
           >
             Notifiche
           </Typography>
+          {unreadCount > 0 && (
+            <Chip
+              label={`${unreadCount} nuove`}
+              size="small"
+              sx={{
+                backgroundColor: '#2e7d32',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.65rem',
+              }}
+            />
+          )}
         </Box>
-        <MenuItem onClick={handleNotifClose} sx={{ py: 1.5 }}>
-          <Box>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                fontWeight: 500,
-                fontSize: '0.85rem',
-                color: '#000000',
-              }}
-            >
-              Nuovo ordine #12345
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                fontSize: '0.75rem',
-                color: '#999999',
-              }}
-            >
-              Da: Mario Rossi • 2 minuti fa
+
+        {loadingNotifs ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography sx={{ color: '#6b7280', fontSize: '0.85rem' }}>
+              Caricamento...
             </Typography>
           </Box>
-        </MenuItem>
-        <MenuItem onClick={handleNotifClose} sx={{ py: 1.5 }}>
-          <Box>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                fontWeight: 500,
-                fontSize: '0.85rem',
-                color: '#000000',
-              }}
-            >
-              Prodotto esaurito: Audi RS6
+        ) : notifications.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Notifications sx={{ fontSize: 48, color: '#e0e0e0', mb: 1 }} />
+            <Typography sx={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 500 }}>
+              Nessuna notifica
             </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                fontSize: '0.75rem',
-                color: '#999999',
-              }}
-            >
-              Magazzino • 1 ora fa
+            <Typography sx={{ color: '#999999', fontSize: '0.8rem' }}>
+              Non ci sono nuovi ordini o aggiornamenti
             </Typography>
           </Box>
-        </MenuItem>
-        <Box sx={{ p: 1.5, borderTop: '1px solid #f0f0f0', textAlign: 'center' }}>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-              fontSize: '0.8rem',
-              color: '#2e7d32',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Visualizza tutte le notifiche
-          </Typography>
-        </Box>
+        ) : (
+          <Box sx={{ maxHeight: '320px', overflow: 'auto' }}>
+            {notifications.map((notif) => (
+              <MenuItem
+                key={notif.id}
+                onClick={() => {
+                  handleNavigate(notif.path);
+                  handleNotifClose();
+                }}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  borderBottom: '1px solid #f5f5f5',
+                  '&:hover': {
+                    backgroundColor: 'rgba(46,125,50,0.04)',
+                  },
+                  transition: 'background-color 0.2s ease',
+                }}
+              >
+                <Box sx={{ display: 'flex', gap: 2, width: '100%', alignItems: 'flex-start' }}>
+                  <Box
+                    sx={{
+                      minWidth: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      backgroundColor: alpha(notif.color, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: notif.color,
+                    }}
+                  >
+                    {notif.icon}
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          color: '#1a1a2e',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {notif.title}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          color: '#999999',
+                          whiteSpace: 'nowrap',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        {notif.time}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '0.75rem',
+                          color: '#6b7280',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        {notif.customer}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          color: '#6b7280',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        •
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: '#2e7d32',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        €{notif.total?.toFixed(2)}
+                      </Typography>
+                      <Chip
+                        label={notif.status}
+                        size="small"
+                        sx={{
+                          height: '16px',
+                          fontSize: '0.55rem',
+                          backgroundColor: alpha(notif.color, 0.1),
+                          color: notif.color,
+                          fontWeight: 600,
+                          borderRadius: '4px',
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              </MenuItem>
+            ))}
+          </Box>
+        )}
+
+        {notifications.length > 0 && (
+          <Box sx={{ p: 1.5, borderTop: '1px solid #f0f0f0', textAlign: 'center' }}>
+            <Link
+              component="button"
+              onClick={() => {
+                handleNavigate('/admin/orders');
+                handleNotifClose();
+              }}
+              sx={{
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontSize: '0.8rem',
+                color: '#2e7d32',
+                fontWeight: 600,
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Visualizza tutti gli ordini
+            </Link>
+          </Box>
+        )}
       </Menu>
 
       {/* Sidebar Drawer - Desktop only */}

@@ -585,7 +585,7 @@ const Checkout = () => {
 
       console.log('Sending order data:', orderData);
 
-      const response = await axiosInstance.post('/paypal/create-order', orderData);
+      const response = await axiosInstance.post('/orders/create-order', orderData);
 
       console.log('PayPal response:', response.data);
 

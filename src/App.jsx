@@ -12,6 +12,7 @@ import AdminProducts from "./components/AdminProducts";
 import AdminStock from "./components/AdminStock";
 import AdminContact from "./components/AdminContact";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminOrders from "./components/AdminOrders";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AdminSettings from "./components/AdminSettings";
 import NotFound from "./components/NotFound";
@@ -140,6 +141,18 @@ function App() {
             <ProtectedRoute>
               <AdminLayout>
                 <AdminSettings />
+              </AdminLayout>
+            </ProtectedRoute>
+          } 
+        />
+
+
+         <Route 
+          path="/admin/orders" 
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminOrders />
               </AdminLayout>
             </ProtectedRoute>
           } 
