@@ -519,7 +519,7 @@ const Checkout = () => {
 
   const cartTotal = getCartTotal();
   const cartCount = getCartCount();
-  const shippingCost = cartTotal > 100 ? 0 : 9.90;
+  const shippingCost = cartTotal > 100 ? 0 : 0;
   const grandTotal = cartTotal + shippingCost;
 
   useEffect(() => {
