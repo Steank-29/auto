@@ -379,47 +379,165 @@ const PaymentStep = ({ cartTotal, shippingCost, grandTotal, formData, cartCount 
       </Box>
     </Paper>
 
-    {/* Payment Method */}
-    <Box>
-      <Typography sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
-        Metodo di Pagamento
-      </Typography>
+    {/* Payment Methods */}
+    <Typography sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
+      Metodo di Pagamento
+    </Typography>
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          borderRadius: '16px',
-          border: '2px solid #2e7d32',
-          backgroundColor: alpha('#2e7d32', 0.03),
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    {/* PayPal Option */}
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: '16px',
+        border: '2px solid #2e7d32',
+        backgroundColor: alpha('#2e7d32', 0.03),
+        mb: 2,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            backgroundColor: '#0070ba',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Payment sx={{ color: '#ffffff' }} />
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+            PayPal
+          </Typography>
+          <Typography sx={{ fontSize: '0.85rem', color: '#6b7280' }}>
+            Pagamento sicuro tramite PayPal
+          </Typography>
+        </Box>
+        <Chip label="Consigliato" size="small" sx={{ backgroundColor: '#2e7d32', color: '#ffffff' }} />
+      </Box>
+    </Paper>
+
+    {/* Credit/Debit Card Option */}
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: '16px',
+        border: '1px solid #f0f0f0',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          borderColor: '#2e7d32',
+          backgroundColor: alpha('#2e7d32', 0.02),
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            backgroundColor: '#1a1a2e',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Payment sx={{ color: '#ffffff' }} />
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+            Carta di Credito / Debito
+          </Typography>
+          <Typography sx={{ fontSize: '0.85rem', color: '#6b7280' }}>
+            Paga con la tua carta preferita
+          </Typography>
+        </Box>
+        {/* Credit Card Logos - Using inline SVG icons */}
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          {/* Visa - SVG Icon */}
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              backgroundColor: '#0070ba',
+              width: 38,
+              height: 24,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              borderRadius: '3px',
+              bgcolor: '#1A1F71',
+              padding: '2px 4px',
             }}
           >
-            <Payment sx={{ color: '#ffffff' }} />
+            <svg viewBox="0 0 40 12" width="36" height="11">
+              <text x="0" y="10" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="11" fill="white" letterSpacing="1">VISA</text>
+            </svg>
           </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 600, color: '#1a1a2e' }}>
-              PayPal
-            </Typography>
-            <Typography sx={{ fontSize: '0.85rem', color: '#6b7280' }}>
-              Pagamento sicuro tramite PayPal
-            </Typography>
+
+          {/* Mastercard - SVG Icon */}
+          <Box
+            sx={{
+              width: 38,
+              height: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '3px',
+              bgcolor: 'white',
+              border: '1px solid #e0e0e0',
+              padding: '2px 4px',
+              position: 'relative',
+            }}
+          >
+            <svg viewBox="0 0 40 14" width="36" height="12">
+              <circle cx="14" cy="7" r="6" fill="#EB001B" opacity="0.8"/>
+              <circle cx="26" cy="7" r="6" fill="#F79E1B" opacity="0.8"/>
+              <circle cx="20" cy="7" r="4" fill="#F79E1B" opacity="0.8"/>
+            </svg>
           </Box>
-          <Chip label="Consigliato" size="small" sx={{ backgroundColor: '#2e7d32', color: '#ffffff' }} />
-        </Box>
-      </Paper>
-    </Box>
+
+          {/* American Express - SVG Icon */}
+          <Box
+            sx={{
+              width: 38,
+              height: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '3px',
+              bgcolor: '#016FD0',
+              padding: '2px 4px',
+            }}
+          >
+            <svg viewBox="0 0 40 10" width="36" height="9">
+              <text x="0" y="8" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="6" fill="white" letterSpacing="0.5">AMEX</text>
+            </svg>
+          </Box>
+
+          {/* PostePay - SVG Icon */}
+          <Box
+            sx={{
+              width: 38,
+              height: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '3px',
+              bgcolor: '#E3000F',
+              padding: '2px 4px',
+            }}
+          >
+            <svg viewBox="0 0 40 10" width="36" height="9">
+              <text x="0" y="8" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="6" fill="white" letterSpacing="0.5">POSTE</text>
+              <text x="18" y="8" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="6" fill="white" letterSpacing="0.5">PAY</text>
+            </svg>
+          </Box>
+        </Stack>
+      </Box>
+    </Paper>
 
     {/* Order Items Count */}
     <Box sx={{ mt: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: '12px' }}>
@@ -835,7 +953,7 @@ const Checkout = () => {
                 >
                   {isProcessing ? 'Elaborazione...' : (
                     <>
-                      Paga con &nbsp; <PayPalText />
+                      Paga 
                     </>
                   )}
                 </Button>

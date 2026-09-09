@@ -327,122 +327,122 @@ const handlePayPalPayment = async () => {
                 border: '1px solid rgba(0,0,0,0.04)',
               }}
             >
-              {/* Main Image */}
-              <Box
-                sx={{
-                  position: 'relative',
-                  height: { xs: 300, sm: 350, md: 400 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: '#fafafa',
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image={getImageUrl(product.mainImage)}
-                  alt={product.name}
-                  sx={{
-                    width: '100vw',
-                    height: '100%',
-                    objectFit: 'contain',
-                    p: 2,
-                    transition: 'all 0.3s ease',
-                  }}
-                />
+{/* Main Image */}
+<Box
+  sx={{
+    position: 'relative',
+    height: { xs: 300, sm: 350, md: 400 },
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    bgcolor: '#fafafa',
+  }}
+>
+  <CardMedia
+    component="img"
+    image={getImageUrl(currentImage)}  // ← CHANGE THIS: use currentImage instead of product.mainImage
+    alt={product.name}
+    sx={{
+      width: '100vw',
+      height: '100%',
+      objectFit: 'contain',
+      p: 2,
+      transition: 'all 0.3s ease',
+    }}
+  />
 
-                {/* Navigation Arrows - Only if more than 1 image */}
-                {allImages.length > 1 && (
-                  <>
-                    <IconButton
-                      onClick={handlePrevImage}
-                      sx={{
-                        position: 'absolute',
-                        left: 8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(255,255,255,0.85)',
-                        backdropFilter: 'blur(4px)',
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                        '&:hover': { bgcolor: '#ffffff' },
-                        width: 36,
-                        height: 36,
-                      }}
-                    >
-                      <ChevronLeft />
-                    </IconButton>
-                    <IconButton
-                      onClick={handleNextImage}
-                      sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(255,255,255,0.85)',
-                        backdropFilter: 'blur(4px)',
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                        '&:hover': { bgcolor: '#ffffff' },
-                        width: 36,
-                        height: 36,
-                      }}
-                    >
-                      <ChevronRight />
-                    </IconButton>
-                  </>
-                )}
+  {/* Navigation Arrows - Only if more than 1 image */}
+  {allImages.length > 1 && (
+    <>
+      <IconButton
+        onClick={handlePrevImage}
+        sx={{
+          position: 'absolute',
+          left: 8,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          bgcolor: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(4px)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+          '&:hover': { bgcolor: '#ffffff' },
+          width: 36,
+          height: 36,
+        }}
+      >
+        <ChevronLeft />
+      </IconButton>
+      <IconButton
+        onClick={handleNextImage}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          bgcolor: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(4px)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+          '&:hover': { bgcolor: '#ffffff' },
+          width: 36,
+          height: 36,
+        }}
+      >
+        <ChevronRight />
+      </IconButton>
+    </>
+  )}
 
-                {/* Image Counter */}
-                {allImages.length > 1 && (
-                  <Typography
-                    sx={{
-                      position: 'absolute',
-                      bottom: 16,
-                      right: 16,
-                      bgcolor: 'rgba(0,0,0,0.6)',
-                      backdropFilter: 'blur(4px)',
-                      color: '#ffffff',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {selectedImageIndex + 1} / {allImages.length}
-                  </Typography>
-                )}
+  {/* Image Counter */}
+  {allImages.length > 1 && (
+    <Typography
+      sx={{
+        position: 'absolute',
+        bottom: 16,
+        right: 16,
+        bgcolor: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
+        color: '#ffffff',
+        px: 1.5,
+        py: 0.5,
+        borderRadius: '12px',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+      }}
+    >
+      {selectedImageIndex + 1} / {allImages.length}
+    </Typography>
+  )}
 
-                {/* Brand Badge */}
-                <Chip
-                  label={product.brand}
-                  sx={{
-                    position: 'absolute',
-                    top: 16,
-                    left: 16,
-                    bgcolor: brandColor,
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    height: 32,
-                  }}
-                />
-                {product.isFeatured && (
-                  <Chip
-                    icon={<Star sx={{ fontSize: 14, color: '#fff' }} />}
-                    label="In Evidenza"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 16,
-                      left: 16,
-                      bgcolor: '#2e7d32',
-                      color: '#fff',
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                      height: 28,
-                    }}
-                  />
-                )}
-              </Box>
+  {/* Brand Badge */}
+  <Chip
+    label={product.brand}
+    sx={{
+      position: 'absolute',
+      top: 16,
+      left: 16,
+      bgcolor: brandColor,
+      color: '#fff',
+      fontWeight: 700,
+      fontSize: '0.75rem',
+      height: 32,
+    }}
+  />
+  {product.isFeatured && (
+    <Chip
+      icon={<Star sx={{ fontSize: 14, color: '#fff' }} />}
+      label="In Evidenza"
+      sx={{
+        position: 'absolute',
+        bottom: 16,
+        left: 16,
+        bgcolor: '#2e7d32',
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: '0.7rem',
+        height: 28,
+      }}
+    />
+  )}
+</Box>
 
               {/* Thumbnails Gallery */}
               {allImages.length > 1 && (
