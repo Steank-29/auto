@@ -539,7 +539,7 @@ const PaymentStep = ({ cartTotal, shippingCost, grandTotal, formData, cartCount 
       </Box>
     </Paper>
 
-    {/* Order Items Count */}
+    {/* Order Items Count 1 */}
     <Box sx={{ mt: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: '12px' }}>
       <Typography sx={{ color: '#6b7280', fontSize: '0.9rem' }}>
         <strong>{cartCount}</strong> articoli nel carrello
