@@ -98,6 +98,7 @@ const AdminProducts = () => {
     maxPrice: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [imagesToDelete, setImagesToDelete] = useState({ main: false, more: [] });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -181,6 +182,7 @@ const AdminProducts = () => {
   };
 
   const handleOpenDialog = (product = null) => {
+    setImagesToDelete({ main: false, more: [] });
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -204,6 +206,7 @@ const AdminProducts = () => {
         main: product.mainImage ? getImageUrl(product.mainImage) : null, 
         more: product.moreImages?.map(img => getImageUrl(img)) || [] 
       });
+      setImageFiles({ main: null, more: [] });
     } else {
       setEditingProduct(null);
       setFormData({
@@ -234,6 +237,7 @@ const AdminProducts = () => {
     setOpenDialog(false);
     setEditingProduct(null);
     setFormErrors({});
+    setImagesToDelete({ main: false, more: [] });
   };
 
   const handleFormChange = (e) => {
@@ -283,6 +287,26 @@ const AdminProducts = () => {
     }));
   };
 
+  const handleRemoveMainImage = () => {
+    if (editingProduct && editingProduct.mainImage) {
+      setImagesToDelete(prev => ({ ...prev, main: true }));
+      setImagePreviews(prev => ({ ...prev, main: null }));
+    }
+  };
+
+  const handleRemoveMoreImage = (index) => {
+    if (editingProduct && editingProduct.moreImages && editingProduct.moreImages[index]) {
+      setImagesToDelete(prev => ({
+        ...prev,
+        more: [...prev.more, index]
+      }));
+      setImagePreviews(prev => ({
+        ...prev,
+        more: prev.more.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
     if (!formData.name) errors.name = 'Product name is required';
@@ -322,6 +346,14 @@ const AdminProducts = () => {
         installation: formData.installation,
         warranty: formData.warranty,
       }));
+
+      // Add images to delete
+      if (imagesToDelete.main) {
+        submitData.append('deleteMainImage', 'true');
+      }
+      if (imagesToDelete.more.length > 0) {
+        submitData.append('deleteMoreImages', JSON.stringify(imagesToDelete.more));
+      }
 
       if (imageFiles.main) {
         submitData.append('mainImage', imageFiles.main);
@@ -511,7 +543,6 @@ const AdminProducts = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            {/* Left side - Product count */}
             <Grid item xs={12} md={3}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Inventory sx={{ color: '#2e7d32', fontSize: 20 }} />
@@ -538,7 +569,6 @@ const AdminProducts = () => {
               </Box>
             </Grid>
 
-            {/* Center - Search */}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -578,7 +608,6 @@ const AdminProducts = () => {
               />
             </Grid>
 
-            {/* Right side - Controls */}
             <Grid item xs={12} md={3}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Button
@@ -691,7 +720,7 @@ const AdminProducts = () => {
           </Grid>
         </Paper>
 
-        {/* Filters - Enhanced */}
+        {/* Filters */}
         <Collapse in={showFilters}>
           <Paper
             sx={{
@@ -1018,7 +1047,6 @@ const AdminProducts = () => {
                   </Table>
                 </TableContainer>
               ) : (
-                // Grid View with checkboxes
                 <Box sx={{ p: 3 }}>
                   <Grid container spacing={3}>
                     {products.length === 0 ? (
@@ -1238,7 +1266,7 @@ const AdminProducts = () => {
         </Paper>
       </Box>
 
-      {/* Add/Edit Product Dialog - Perfectly Aligned */}
+      {/* Add/Edit Product Dialog */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -1536,6 +1564,7 @@ const AdminProducts = () => {
                 <Divider sx={{ mb: 2 }} />
               </Grid>
 
+              {/* Main Image */}
               <Grid size={12}>
                 <Box
                   sx={{
@@ -1571,6 +1600,7 @@ const AdminProducts = () => {
                       {imagePreviews.main ? 'Change Main Image' : 'Upload Main Image *'}
                     </Button>
                   </label>
+                  
                   {imagePreviews.main && (
                     <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
                       <img
@@ -1584,6 +1614,22 @@ const AdminProducts = () => {
                           border: '1px solid #e5e7eb',
                         }}
                       />
+                      {editingProduct && editingProduct.mainImage && !imagesToDelete.main && (
+                        <IconButton
+                          size="small"
+                          onClick={handleRemoveMainImage}
+                          sx={{
+                            position: 'absolute',
+                            top: -8,
+                            right: -8,
+                            backgroundColor: 'white',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            '&:hover': { backgroundColor: '#ff4444', color: 'white' },
+                          }}
+                        >
+                          <Close fontSize="small" />
+                        </IconButton>
+                      )}
                     </Box>
                   )}
                   {formErrors.mainImage && (
@@ -1594,6 +1640,7 @@ const AdminProducts = () => {
                 </Box>
               </Grid>
 
+              {/* More Images */}
               <Grid size={12}>
                 <Box
                   sx={{
@@ -1629,9 +1676,45 @@ const AdminProducts = () => {
                       Upload More Images
                     </Button>
                   </label>
+                  
                   <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+                    {/* Existing more images */}
+                    {editingProduct && editingProduct.moreImages && editingProduct.moreImages.map((image, index) => {
+                      if (imagesToDelete.more.includes(index)) return null;
+                      return (
+                        <Box key={`existing-${index}`} sx={{ position: 'relative' }}>
+                          <img
+                            src={getImageUrl(image)}
+                            alt={`More ${index}`}
+                            style={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '1px solid #e5e7eb',
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveMoreImage(index)}
+                            sx={{
+                              position: 'absolute',
+                              top: -8,
+                              right: -8,
+                              backgroundColor: 'white',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                              '&:hover': { backgroundColor: '#ff4444', color: 'white' },
+                            }}
+                          >
+                            <Close fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      );
+                    })}
+                    
+                    {/* Newly uploaded more images */}
                     {imagePreviews.more.map((preview, index) => (
-                      <Box key={index} sx={{ position: 'relative' }}>
+                      <Box key={`new-${index}`} sx={{ position: 'relative' }}>
                         <img
                           src={preview}
                           alt={`More ${index}`}
@@ -1733,713 +1816,700 @@ const AdminProducts = () => {
         </DialogActions>
       </Dialog>
 
-{/* Delete Single Confirmation Dialog - Enhanced Professional */}
-<Dialog
-  open={deleteDialogOpen}
-  onClose={() => setDeleteDialogOpen(false)}
-  PaperProps={{
-    sx: {
-      borderRadius: '24px',
-      maxWidth: 440,
-      width: '100%',
-      p: 0,
-      overflow: 'hidden',
-      boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
-    },
-  }}
->
-  {/* Gradient Header */}
-  <Box
-    sx={{
-      background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
-      p: 4,
-      textAlign: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: -50,
-        right: -50,
-        width: 150,
-        height: 150,
-        borderRadius: '50%',
-        background: 'rgba(255,255,255,0.05)',
-      },
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: -80,
-        left: -80,
-        width: 200,
-        height: 200,
-        borderRadius: '50%',
-        background: 'rgba(255,255,255,0.03)',
-      },
-    }}
-  >
-    <Box sx={{ position: 'relative', zIndex: 1 }}>
-      <Box
-        sx={{
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto',
-          backdropFilter: 'blur(10px)',
-          border: '2px solid rgba(255,255,255,0.3)',
-        }}
-      >
-        <ErrorIcon sx={{ fontSize: 44, color: '#ffffff' }} />
-      </Box>
-      <Typography
-        sx={{
-          color: 'rgba(255,255,255,0.8)',
-          fontSize: '0.9rem',
-          mt: 0.5,
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-        }}
-      >
-        This action cannot be undone
-      </Typography>
-    </Box>
-  </Box>
-
-  {/* Content */}
-  <Box sx={{ p: 4 }}>
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 2,
-        p: 2,
-        backgroundColor: 'rgba(255,68,68,0.04)',
-        borderRadius: '12px',
-        border: '1px solid rgba(255,68,68,0.08)',
-        mb: 3,
-      }}
-    >
-      <Box
-        sx={{
-          minWidth: 36,
-          height: 36,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,68,68,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ErrorIcon sx={{ fontSize: 20, color: '#ff4444' }} />
-      </Box>
-      <Box>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: '#1a1a2e',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          You are about to delete:
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            color: '#ff4444',
-            fontSize: '1.05rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            mt: 0.5,
-          }}
-        >
-          {productToDelete?.name}
-        </Typography>
-        <Typography
-          sx={{
-            color: '#6b7280',
-            fontSize: '0.85rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            mt: 0.5,
-          }}
-        >
-          Brand: {productToDelete?.brand} • Model: {productToDelete?.model}
-        </Typography>
-      </Box>
-    </Box>
-
-    {/* Product Details Grid */}
-    <Grid container spacing={1.5} sx={{ mb: 3 }}>
-      <Grid size={6}>
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            color: '#6b7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          Price
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: '#1a1a2e',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          €{productToDelete?.price}
-        </Typography>
-      </Grid>
-      <Grid size={6}>
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            color: '#6b7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          Stock
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: '#1a1a2e',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          {productToDelete?.stock} units
-        </Typography>
-      </Grid>
-      <Grid size={6}>
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            color: '#6b7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          Category
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: '#1a1a2e',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          {productToDelete?.category}
-        </Typography>
-      </Grid>
-      <Grid size={6}>
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            color: '#6b7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          Status
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: productToDelete?.stock === 0 ? '#ff4444' : '#2e7d32',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          }}
-        >
-          {productToDelete?.stock === 0 ? 'Out of Stock' : 'In Stock'}
-        </Typography>
-      </Grid>
-    </Grid>
-
-    <Divider sx={{ mb: 3 }} />
-
-    {/* Warning Message */}
-    <Box
-      sx={{
-        p: 2,
-        backgroundColor: 'rgba(255,68,68,0.03)',
-        borderRadius: '12px',
-        border: '1px dashed rgba(255,68,68,0.2)',
-        mb: 3,
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: '0.8rem',
-          color: '#6b7280',
-          textAlign: 'center',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          lineHeight: 1.6,
-        }}
-      >
-        <span style={{ fontWeight: 700, color: '#ff4444' }}>Warning:</span> This will permanently remove
-        this product from your inventory and all associated data.
-      </Typography>
-    </Box>
-
-    {/* Actions */}
-    <Box sx={{ display: 'flex', gap: 1.5 }}>
-      <Button
-        fullWidth
-        onClick={() => setDeleteDialogOpen(false)}
-        sx={{
-          borderRadius: '14px',
-          textTransform: 'none',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          fontWeight: 600,
-          color: '#6b7280',
-          py: 1.4,
-          border: '1px solid #e5e7eb',
-          backgroundColor: '#ffffff',
-          '&:hover': {
-            backgroundColor: '#f8f9fa',
-            borderColor: '#d1d5db',
+      {/* Delete Single Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '24px',
+            maxWidth: 440,
+            width: '100%',
+            p: 0,
+            overflow: 'hidden',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
           },
         }}
       >
-        Cancel
-      </Button>
-      <Button
-        fullWidth
-        onClick={handleDeleteConfirm}
-        variant="contained"
-        sx={{
-          backgroundColor: '#ff4444',
-          borderRadius: '14px',
-          textTransform: 'none',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          fontWeight: 600,
-          py: 1.4,
-          boxShadow: '0 4px 16px rgba(255,68,68,0.25)',
-          '&:hover': {
-            backgroundColor: '#cc0000',
-            boxShadow: '0 6px 24px rgba(255,68,68,0.35)',
-            transform: 'translateY(-1px)',
-          },
-          transition: 'all 0.2s ease',
-        }}
-      >
-        Yes, Delete Product
-      </Button>
-    </Box>
-  </Box>
-</Dialog>
-
-{/* Delete Multiple Confirmation Dialog - Enhanced Professional */}
-<Dialog
-  open={deleteMultipleOpen}
-  onClose={() => setDeleteMultipleOpen(false)}
-  PaperProps={{
-    sx: {
-      borderRadius: '24px',
-      maxWidth: 480,
-      width: '100%',
-      p: 0,
-      overflow: 'hidden',
-      boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
-    },
-  }}
->
-  {/* Gradient Header */}
-  <Box
-    sx={{
-      background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
-      p: 12,
-      textAlign: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: -50,
-        right: -50,
-        width: 150,
-        height: 150,
-        borderRadius: '50%',
-        background: 'rgba(255,255,255,0.05)',
-      },
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: -80,
-        left: -80,
-        width: 200,
-        height: 200,
-        borderRadius: '50%',
-        background: 'rgba(255,255,255,0.03)',
-      },
-    }}
-  >
-    <Box sx={{ position: 'relative', zIndex: 1 }}>
-      <Box
-        sx={{
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto',
-          backdropFilter: 'blur(10px)',
-          border: '2px solid rgba(255,255,255,0.3)',
-        }}
-      >
-        <ErrorIcon sx={{ fontSize: 44, color: '#ffffff' }} />
-      </Box>
-      
-    </Box>
-  </Box>
-
-  {/* Content */}
-  <Box sx={{ p: 4 }}>
-    {/* Selected Products Count */}
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        p: 2,
-        backgroundColor: 'rgba(255,68,68,0.04)',
-        borderRadius: '12px',
-        border: '1px solid rgba(255,68,68,0.08)',
-        mb: 3,
-      }}
-    >
-      <Box
-        sx={{
-          minWidth: 40,
-          height: 40,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,68,68,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ErrorIcon sx={{ fontSize: 22, color: '#ff4444' }} />
-      </Box>
-      <Box>
-        <Typography
+        <Box
           sx={{
-            fontWeight: 600,
-            color: '#1a1a2e',
-            fontSize: '0.95rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+            background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+            p: 4,
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 150,
+              height: 150,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -80,
+              left: -80,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.03)',
+            },
           }}
         >
-          Selected Products
-        </Typography>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            color: '#ff4444',
-            fontSize: '1.1rem',
-            fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            mt: 0.5,
-          }}
-        >
-          {selectedProducts.length} products selected for deletion
-        </Typography>
-      </Box>
-    </Box>
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(255,255,255,0.3)',
+              }}
+            >
+              <ErrorIcon sx={{ fontSize: 44, color: '#ffffff' }} />
+            </Box>
+            <Typography
+              sx={{
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '0.9rem',
+                mt: 0.5,
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+              }}
+            >
+              This action cannot be undone
+            </Typography>
+          </Box>
+        </Box>
 
-    {/* Product List */}
-    <Box
-      sx={{
-        maxHeight: 200,
-        overflowY: 'auto',
-        mb: 3,
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: '#f1f1f1',
-          borderRadius: '10px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: '#c1c1c1',
-          borderRadius: '10px',
-          '&:hover': {
-            backgroundColor: '#a8a8a8',
-          },
-        },
-      }}
-    >
-      {products
-        .filter(p => selectedProducts.includes(p._id))
-        .map((product, index) => (
+        <Box sx={{ p: 4 }}>
           <Box
-            key={product._id}
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: 2,
-              p: 1.5,
-              borderRadius: '10px',
-              mb: 0.5,
-              backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)',
-              transition: 'background-color 0.2s ease',
-              '&:hover': {
-                backgroundColor: 'rgba(255,68,68,0.04)',
-              },
+              p: 2,
+              backgroundColor: 'rgba(255,68,68,0.04)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,68,68,0.08)',
+              mb: 3,
             }}
           >
             <Box
               sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '6px',
-                backgroundColor: 'rgba(255,68,68,0.08)',
+                minWidth: 36,
+                height: 36,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,68,68,0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  color: '#ff4444',
-                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                }}
-              >
-                {index + 1}
-              </Typography>
+              <ErrorIcon sx={{ fontSize: 20, color: '#ff4444' }} />
             </Box>
-            <Avatar
-              src={product.mainImage ? getImageUrl(product.mainImage) : ''}
-              variant="rounded"
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                flexShrink: 0,
-                bgcolor: '#f5f5f5',
-              }}
-            >
-              <ImageIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-            </Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box>
               <Typography
                 sx={{
                   fontWeight: 600,
                   color: '#1a1a2e',
-                  fontSize: '0.85rem',
+                  fontSize: '0.95rem',
                   fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                 }}
               >
-                {product.name}
+                You are about to delete:
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Typography
-                  sx={{
-                    color: '#6b7280',
-                    fontSize: '0.7rem',
-                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                  }}
-                >
-                  {product.brand}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: '#6b7280',
-                    fontSize: '0.7rem',
-                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                  }}
-                >
-                  •
-                </Typography>
-                <Typography
-                  sx={{
-                    color: '#6b7280',
-                    fontSize: '0.7rem',
-                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                  }}
-                >
-                  €{product.price}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: '#6b7280',
-                    fontSize: '0.7rem',
-                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-                  }}
-                >
-                  •
-                </Typography>
-                <Chip
-                  label={product.stock === 0 ? 'Out of Stock' : `${product.stock} in stock`}
-                  size="small"
-                  sx={{
-                    height: 18,
-                    fontSize: '0.6rem',
-                    backgroundColor: product.stock === 0 ? 'rgba(255,68,68,0.08)' : 'rgba(46,125,50,0.08)',
-                    color: product.stock === 0 ? '#ff4444' : '#2e7d32',
-                    fontWeight: 600,
-                  }}
-                />
-              </Box>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: '#ff4444',
+                  fontSize: '1.05rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                  mt: 0.5,
+                }}
+              >
+                {productToDelete?.name}
+              </Typography>
+              <Typography
+                sx={{
+                  color: '#6b7280',
+                  fontSize: '0.85rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                  mt: 0.5,
+                }}
+              >
+                Brand: {productToDelete?.brand} • Model: {productToDelete?.model}
+              </Typography>
             </Box>
           </Box>
-        ))}
-    </Box>
 
-    {/* Affected Items Summary */}
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 1.5,
-        mb: 3,
-      }}
-    >
-      {[
-        { label: 'Total Selected', value: selectedProducts.length, color: '#1a1a2e' },
-        { 
-          label: 'In Stock', 
-          value: products.filter(p => selectedProducts.includes(p._id) && p.stock > 0).length,
-          color: '#2e7d32' 
-        },
-        { 
-          label: 'Out of Stock', 
-          value: products.filter(p => selectedProducts.includes(p._id) && p.stock === 0).length,
-          color: '#ff4444' 
-        },
-      ].map((item, index) => (
+          <Grid container spacing={1.5} sx={{ mb: 3 }}>
+            <Grid size={6}>
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontWeight: 600,
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                Price
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: '#1a1a2e',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                €{productToDelete?.price}
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontWeight: 600,
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                Stock
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: '#1a1a2e',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                {productToDelete?.stock} units
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontWeight: 600,
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                Category
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: '#1a1a2e',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                {productToDelete?.category}
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontWeight: 600,
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                Status
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: productToDelete?.stock === 0 ? '#ff4444' : '#2e7d32',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                {productToDelete?.stock === 0 ? 'Out of Stock' : 'In Stock'}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ mb: 3 }} />
+
+          <Box
+            sx={{
+              p: 2,
+              backgroundColor: 'rgba(255,68,68,0.03)',
+              borderRadius: '12px',
+              border: '1px dashed rgba(255,68,68,0.2)',
+              mb: 3,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.8rem',
+                color: '#6b7280',
+                textAlign: 'center',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                lineHeight: 1.6,
+              }}
+            >
+              <span style={{ fontWeight: 700, color: '#ff4444' }}>Warning:</span> This will permanently remove
+              this product from your inventory and all associated data.
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <Button
+              fullWidth
+              onClick={() => setDeleteDialogOpen(false)}
+              sx={{
+                borderRadius: '14px',
+                textTransform: 'none',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontWeight: 600,
+                color: '#6b7280',
+                py: 1.4,
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#ffffff',
+                '&:hover': {
+                  backgroundColor: '#f8f9fa',
+                  borderColor: '#d1d5db',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              sx={{
+                backgroundColor: '#ff4444',
+                borderRadius: '14px',
+                textTransform: 'none',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontWeight: 600,
+                py: 1.4,
+                boxShadow: '0 4px 16px rgba(255,68,68,0.25)',
+                '&:hover': {
+                  backgroundColor: '#cc0000',
+                  boxShadow: '0 6px 24px rgba(255,68,68,0.35)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Yes, Delete Product
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
+
+      {/* Delete Multiple Confirmation Dialog */}
+      <Dialog
+        open={deleteMultipleOpen}
+        onClose={() => setDeleteMultipleOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '24px',
+            maxWidth: 480,
+            width: '100%',
+            p: 0,
+            overflow: 'hidden',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
+          },
+        }}
+      >
         <Box
-          key={index}
           sx={{
-            p: 1.5,
-            backgroundColor: 'rgba(0,0,0,0.02)',
-            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+            p: 4,
             textAlign: 'center',
-            border: '1px solid rgba(0,0,0,0.04)',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 150,
+              height: 150,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -80,
+              left: -80,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.03)',
+            },
           }}
         >
-          <Typography
-            sx={{
-              fontSize: '0.6rem',
-              color: '#6b7280',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              fontWeight: 600,
-              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            }}
-          >
-            {item.label}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: item.color,
-              fontSize: '1.1rem',
-              fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-            }}
-          >
-            {item.value}
-          </Typography>
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(255,255,255,0.3)',
+              }}
+            >
+              <ErrorIcon sx={{ fontSize: 44, color: '#ffffff' }} />
+            </Box>
+          </Box>
         </Box>
-      ))}
-    </Box>
 
-    <Divider sx={{ mb: 3 }} />
+        <Box sx={{ p: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              p: 2,
+              backgroundColor: 'rgba(255,68,68,0.04)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,68,68,0.08)',
+              mb: 3,
+            }}
+          >
+            <Box
+              sx={{
+                minWidth: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,68,68,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ErrorIcon sx={{ fontSize: 22, color: '#ff4444' }} />
+            </Box>
+            <Box>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: '#1a1a2e',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                }}
+              >
+                Selected Products
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: '#ff4444',
+                  fontSize: '1.1rem',
+                  fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                  mt: 0.5,
+                }}
+              >
+                {selectedProducts.length} products selected for deletion
+              </Typography>
+            </Box>
+          </Box>
 
-    {/* Warning Message */}
-    <Box
-      sx={{
-        p: 2,
-        backgroundColor: 'rgba(255,68,68,0.03)',
-        borderRadius: '12px',
-        border: '1px dashed rgba(255,68,68,0.2)',
-        mb: 3,
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: '0.8rem',
-          color: '#6b7280',
-          textAlign: 'center',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          lineHeight: 1.6,
-        }}
-      >
-        <span style={{ fontWeight: 700, color: '#ff4444' }}>Warning:</span> This will permanently remove
-        all {selectedProducts.length} selected products from your inventory and all associated data.
-      </Typography>
-    </Box>
+          <Box
+            sx={{
+              maxHeight: 200,
+              overflowY: 'auto',
+              mb: 3,
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: '#f1f1f1',
+                borderRadius: '10px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: '#c1c1c1',
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: '#a8a8a8',
+                },
+              },
+            }}
+          >
+            {products
+              .filter(p => selectedProducts.includes(p._id))
+              .map((product, index) => (
+                <Box
+                  key={product._id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 1.5,
+                    borderRadius: '10px',
+                    mb: 0.5,
+                    backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)',
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,68,68,0.04)',
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(255,68,68,0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: '#ff4444',
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                      }}
+                    >
+                      {index + 1}
+                    </Typography>
+                  </Box>
+                  <Avatar
+                    src={product.mainImage ? getImageUrl(product.mainImage) : ''}
+                    variant="rounded"
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      flexShrink: 0,
+                      bgcolor: '#f5f5f5',
+                    }}
+                  >
+                    <ImageIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color: '#1a1a2e',
+                        fontSize: '0.85rem',
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {product.name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      <Typography
+                        sx={{
+                          color: '#6b7280',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        {product.brand}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: '#6b7280',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        •
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: '#6b7280',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        €{product.price}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: '#6b7280',
+                          fontSize: '0.7rem',
+                          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        }}
+                      >
+                        •
+                      </Typography>
+                      <Chip
+                        label={product.stock === 0 ? 'Out of Stock' : `${product.stock} in stock`}
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.6rem',
+                          backgroundColor: product.stock === 0 ? 'rgba(255,68,68,0.08)' : 'rgba(46,125,50,0.08)',
+                          color: product.stock === 0 ? '#ff4444' : '#2e7d32',
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+          </Box>
 
-    {/* Actions */}
-    <Box sx={{ display: 'flex', gap: 1.5 }}>
-      <Button
-        fullWidth
-        onClick={() => setDeleteMultipleOpen(false)}
-        sx={{
-          borderRadius: '14px',
-          textTransform: 'none',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          fontWeight: 600,
-          color: '#6b7280',
-          py: 1.4,
-          border: '1px solid #e5e7eb',
-          backgroundColor: '#ffffff',
-          '&:hover': {
-            backgroundColor: '#f8f9fa',
-            borderColor: '#d1d5db',
-          },
-        }}
-      >
-        Cancel
-      </Button>
-      <Button
-        fullWidth
-        onClick={handleBulkDeleteConfirm}
-        variant="contained"
-        sx={{
-          backgroundColor: '#ff4444',
-          borderRadius: '14px',
-          textTransform: 'none',
-          fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
-          fontWeight: 600,
-          py: 1.4,
-          boxShadow: '0 4px 16px rgba(255,68,68,0.25)',
-          '&:hover': {
-            backgroundColor: '#cc0000',
-            boxShadow: '0 6px 24px rgba(255,68,68,0.35)',
-            transform: 'translateY(-1px)',
-          },
-          transition: 'all 0.2s ease',
-        }}
-      >
-        Yes, Delete All {selectedProducts.length} Products
-      </Button>
-    </Box>
-  </Box>
-</Dialog>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
+            {[
+              { label: 'Total Selected', value: selectedProducts.length, color: '#1a1a2e' },
+              { 
+                label: 'In Stock', 
+                value: products.filter(p => selectedProducts.includes(p._id) && p.stock > 0).length,
+                color: '#2e7d32' 
+              },
+              { 
+                label: 'Out of Stock', 
+                value: products.filter(p => selectedProducts.includes(p._id) && p.stock === 0).length,
+                color: '#ff4444' 
+              },
+            ].map((item, index) => (
+              <Box
+                key={index}
+                sx={{
+                  p: 1.5,
+                  backgroundColor: 'rgba(0,0,0,0.02)',
+                  borderRadius: '10px',
+                  textAlign: 'center',
+                  border: '1px solid rgba(0,0,0,0.04)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    fontWeight: 600,
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                  }}
+                >
+                  {item.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: item.color,
+                    fontSize: '1.1rem',
+                    fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+
+          <Divider sx={{ mb: 3 }} />
+
+          <Box
+            sx={{
+              p: 2,
+              backgroundColor: 'rgba(255,68,68,0.03)',
+              borderRadius: '12px',
+              border: '1px dashed rgba(255,68,68,0.2)',
+              mb: 3,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.8rem',
+                color: '#6b7280',
+                textAlign: 'center',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                lineHeight: 1.6,
+              }}
+            >
+              <span style={{ fontWeight: 700, color: '#ff4444' }}>Warning:</span> This will permanently remove
+              all {selectedProducts.length} selected products from your inventory and all associated data.
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <Button
+              fullWidth
+              onClick={() => setDeleteMultipleOpen(false)}
+              sx={{
+                borderRadius: '14px',
+                textTransform: 'none',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontWeight: 600,
+                color: '#6b7280',
+                py: 1.4,
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#ffffff',
+                '&:hover': {
+                  backgroundColor: '#f8f9fa',
+                  borderColor: '#d1d5db',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              onClick={handleBulkDeleteConfirm}
+              variant="contained"
+              sx={{
+                backgroundColor: '#ff4444',
+                borderRadius: '14px',
+                textTransform: 'none',
+                fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                fontWeight: 600,
+                py: 1.4,
+                boxShadow: '0 4px 16px rgba(255,68,68,0.25)',
+                '&:hover': {
+                  backgroundColor: '#cc0000',
+                  boxShadow: '0 6px 24px rgba(255,68,68,0.35)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Yes, Delete All {selectedProducts.length} Products
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
 
       {/* Snackbar Notifications */}
       <Snackbar

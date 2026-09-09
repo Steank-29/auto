@@ -234,15 +234,49 @@ const updateProduct = async (req, res) => {
 
     const updateData = { ...req.body };
 
+    // Handle main image deletion
+    if (req.body.deleteMainImage === 'true') {
+      // Delete the file from server
+      const fs = require('fs');
+      const path = require('path');
+      if (product.mainImage) {
+        const filePath = path.join(__dirname, '../../uploads', path.basename(product.mainImage));
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      updateData.mainImage = null;
+    }
+
+    // Handle more images deletion
+    if (req.body.deleteMoreImages) {
+      const indices = JSON.parse(req.body.deleteMoreImages);
+      const fs = require('fs');
+      const path = require('path');
+      if (product.moreImages) {
+        indices.forEach(index => {
+          if (product.moreImages[index]) {
+            const filePath = path.join(__dirname, '../../uploads', path.basename(product.moreImages[index]));
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          }
+        });
+        // Remove deleted images from the array
+        updateData.moreImages = product.moreImages.filter((_, i) => !indices.includes(i));
+      }
+    }
+
     // Handle main image upload
     if (req.files && req.files.mainImage) {
       updateData.mainImage = `/uploads/${req.files.mainImage[0].filename}`;
     }
 
-    // Handle more images upload
+    // Handle more images upload (append to existing)
     if (req.files && req.files.moreImages) {
       const newImages = req.files.moreImages.map(file => `/uploads/${file.filename}`);
-      updateData.moreImages = [...(product.moreImages || []), ...newImages];
+      const existingImages = updateData.moreImages || product.moreImages || [];
+      updateData.moreImages = [...existingImages, ...newImages];
     }
 
     // Parse JSON fields if they are strings
