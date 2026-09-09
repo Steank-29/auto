@@ -327,7 +327,7 @@ const handlePayPalPayment = async () => {
                 border: '1px solid rgba(0,0,0,0.04)',
               }}
             >
-{/* Main Image */}
+{/* Main Image test */}
 <Box
   sx={{
     position: 'relative',
